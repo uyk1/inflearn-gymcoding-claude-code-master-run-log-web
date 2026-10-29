@@ -1,7 +1,7 @@
-# Next.js 15 + shadcn/ui Starter Kit
+# Run Log
 
-Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn/ui를 기반으로 한 스타터 킷입니다.
-로그인/인증은 포함하지 않은 **기본 구성**만 담겨 있습니다.
+러닝 기록을 노션(CMS)에 쌓고, 웹에서 살펴보며 도움을 받는 프로젝트입니다.
+Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn/ui 기반이며, 아직 기능 구현 전의 **기본 구성**만 담겨 있습니다.
 
 ## 기술 스택
 

@@ -8,7 +8,7 @@ export function Header() {
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
         <div className="flex items-center gap-6">
           <Link href="/" className="text-lg font-bold">
-            Starter Kit
+            Run Log
           </Link>
           <nav className="flex items-center gap-4 text-sm">
             <Link

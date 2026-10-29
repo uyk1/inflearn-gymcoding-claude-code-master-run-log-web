@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Next.js Starter Kit",
-  description: "Next.js 15 + TypeScript + Tailwind CSS + shadcn/ui 스타터 킷",
+  title: "Run Log",
+  description: "러닝 기록을 노션에 쌓고 살펴보는 웹 앱",
 };
 
 export default function RootLayout({

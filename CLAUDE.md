@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Next.js 15 + shadcn/ui 스타터 킷입니다. 인증·백엔드·DB는 포함되어 있지 않습니다.
+러닝 기록을 노션(CMS)에 쌓고 웹에서 살펴보는 프로젝트입니다. Next.js 15 + shadcn/ui 기반 스타터 킷에서 출발했으며, 현재 인증·백엔드·DB는 포함되어 있지 않습니다. 노션 연동은 아직 추가 전입니다.
 전역 규칙(한국어 응답·주석·커밋, 들여쓰기, TypeScript, Tailwind)은 `~/.claude/CLAUDE.md`를 따릅니다.
 
 ## 명령어와 검증
@@ -44,4 +44,4 @@ Next.js 15 + shadcn/ui 스타터 킷입니다. 인증·백엔드·DB는 포함�
   - PostToolUse: ts/tsx/js/mjs 편집 후 eslint를 자동 실행합니다. 오류가 나면 바로 수정하세요.
 - **커맨드**: `/check:all`(타입 체크 → lint → build), `/git:commit`
 - **서브에이전트**: 구현 직후에는 `code-reviewer`, 보안 점검은 `security-checker`, 빌드·타입 오류는 `debugger`를 사용합니다. 나머지는 `.claude/agents/`를 참고하세요.
-- **MCP**: `.mcp.json`에 playwright, context7, sequential-thinking이 설정되어 있습니다. 라이브러리 문서는 context7로 확인하세요.
+- **MCP**: `.mcp.json`에 playwright, context7, sequential-thinking, shadcn이 설정되어 있습니다. 라이브러리 문서는 context7로 확인하세요.
