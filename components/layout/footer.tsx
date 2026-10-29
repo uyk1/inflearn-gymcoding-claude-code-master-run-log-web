@@ -3,7 +3,7 @@ export function Footer() {
   return (
     <footer className="border-t">
       <div className="container mx-auto flex flex-col items-center justify-between gap-2 px-4 py-6 text-sm text-muted-foreground sm:flex-row">
-        <p>© {new Date().getFullYear()} Next.js Starter Kit</p>
+        <p>© {new Date().getFullYear()} Run Log</p>
         <p>
           Built with{" "}
           <a
