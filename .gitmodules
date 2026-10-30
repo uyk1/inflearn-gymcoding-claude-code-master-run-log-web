@@ -1,0 +1,3 @@
+[submodule "shrimp_data"]
+	path = shrimp_data
+	url = https://github.com/uyk1/inflearn-gymcoding-claude-code-master-run-log-shrimp-data.git
