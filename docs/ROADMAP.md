@@ -12,18 +12,17 @@
 
 ## Phase 1: 골격 (환경·구조)
 
-**상태**: ✅ 대부분 완료 (남은 정리 작업 있음)
+**상태**: ✅ 완료 (2026-10-30 확인)
 
 ### 할 작업
 
 - ✅ 스타터 정리: 예제 페이지(폼·로그인)와 기본 SVG 삭제, 홈은 "Run Log" 소개만 남김 (main 머지, PR #3)
 - ✅ PRD 작성: `docs/PRD.md` (main 머지, PR #2)
-- ✅ Notion 연동 준비: `@notionhq/client` v5 설치, `.env.example`에 `NOTION_API_KEY`·`NOTION_DATA_SOURCE_ID` 추가, `.env.local` 값으로 조회 200 확인 (커밋 `6c29e51`, 브랜치 `feat/notion-setup`, push 안 됨)
+- ✅ Notion 연동 준비: `@notionhq/client` v5 설치, `.env.example`에 `NOTION_API_KEY`·`NOTION_DATA_SOURCE_ID` 추가, `.env.local` 값으로 조회 200 확인 (`feat/notion-setup`을 PR #5로 main에 머지, 머지 커밋 `2d20bcc`)
+- ✅ PRD 최근 수정분(소요 시간 텍스트 필드, 평균 페이스는 앱 계산)도 PR #5에 포함되어 커밋 완료
 - ✅ Notion DB 구조가 PRD 4장과 일치함을 확인 (기록 3건, 소요 시간 값 형식 `42:13`, `56:22`, `1:18:01`)
-- 남은 작업
-  - `feat/notion-setup` 브랜치 push 및 PR 생성
-  - PRD 최근 수정분(소요 시간 텍스트 필드, 평균 페이스는 앱 계산) 커밋
-  - 디렉터리 구조 확정 (데이터 계층·타입 위치는 Phase 2에서 결정)
+- ✅ 디렉터리 구조: `CLAUDE.md`의 "구조 (큰 그림)" 섹션과 `shrimp-rules.md` 2장의 경로가 실제 파일과 일치함을 확인. 데이터 계층 구현은 Phase 2에서 진행
+- ✅ `.gitignore`에 `/shrimp_data/` 추가 (작업 메모를 커밋 대상에서 제외, 커밋 대기 중)
 
 ### 왜 이 순서인지
 
@@ -35,10 +34,10 @@
 
 ### 완료 기준
 
-- `feat/notion-setup`이 push되고 PR이 열려 있다.
-- PRD 수정분이 커밋되어 `git status`에 `docs/PRD.md` 변경이 남아 있지 않다.
-- `.env.example`에 두 변수가 있고, 실제 키는 `.env.local`에만 있다.
-- `npm run build`가 통과한다 (현재 상태 기준 재확인).
+- ✅ `feat/notion-setup`이 PR #5로 머지되었다 (2026-10-30 확인).
+- ✅ PRD 수정분이 커밋되어 `docs/PRD.md`에 미커밋 변경이 없다 (2026-10-30 확인).
+- ✅ `.env.example`에 두 변수가 있고, 실제 키는 `.env.local`에만 있다 (변수 이름 기준으로 확인, 값은 확인하지 않음).
+- ✅ `npm run build`, `npx tsc --noEmit`, `npm run lint`가 모두 통과한다 (2026-10-30 확인, 개발 서버 중지 후 실행).
 
 ---
 
@@ -177,7 +176,7 @@
 
 | Phase | 제목 | 상태 | 예상 소요 | 핵심 산출물 |
 |---|---|---|---|---|
-| 1 | 골격 (환경·구조) | ✅ 대부분 완료 | 0.5일 (남은 정리) | 스타터 정리, PRD, Notion 연결 확인 |
+| 1 | 골격 (환경·구조) | ✅ 완료 | 0.5일 (완료) | 스타터 정리, PRD, Notion 연결 확인, 검증 통과 |
 | 2 | 공통 모듈 (데이터 계층, 타입, 공통 컴포넌트) | 미착수 | 2일 | Notion 클라이언트, 파싱·페이스 계산, DTO, 응답 형식 |
 | 3 | 핵심 기능 (목록·상세) | 미착수 | 2일 | 기록 목록, 기간 필터, 상세, 홈 요약 |
 | 4 | 추가 기능 (통계, PWA) | 미착수 | 3일 | 통계 차트, manifest, 아이콘, 설치 안내 |
