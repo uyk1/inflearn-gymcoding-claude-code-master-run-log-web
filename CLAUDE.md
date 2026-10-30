@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-러닝 기록을 노션(CMS)에 쌓고 웹에서 살펴보는 프로젝트입니다. Next.js 15 + shadcn/ui 기반 스타터 킷에서 출발했으며, 현재 인증·백엔드·DB는 포함되어 있지 않습니다. 노션 연동은 아직 추가 전입니다.
+러닝 기록을 노션(CMS)에 쌓고 웹에서 살펴보는 프로젝트입니다. Next.js 15 + shadcn/ui 기반 스타터 킷에서 출발했으며, 현재 인증·DB는 포함되어 있지 않습니다. 노션 연동은 `lib/notion/`에 구현되어 있고, 화면은 서버 컴포넌트에서 이를 직접 읽습니다(API 라우트는 아직 없음).
 전역 규칙(한국어 응답·주석·커밋, 들여쓰기, TypeScript, Tailwind)은 `~/.claude/CLAUDE.md`를 따릅니다.
 
 ## 명령어와 검증
