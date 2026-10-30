@@ -1,3 +1,5 @@
+// 서버 전용 모듈입니다. 클라이언트 컴포넌트에서 import하면 빌드가 실패합니다
+import "server-only";
 import { Client } from "@notionhq/client";
 import { AppError } from "@/lib/errors";
 
