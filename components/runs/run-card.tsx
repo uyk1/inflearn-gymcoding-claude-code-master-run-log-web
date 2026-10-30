@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { RunRecordDto } from "@/lib/notion/dto";
+import { formatPaceLabel } from "@/lib/notion/duration";
 import { formatKoreanDate } from "@/lib/runs/date";
 
 // 기록 한 건을 카드로 보여 줍니다. 누르면 상세 화면으로 이동합니다
@@ -23,7 +24,7 @@ export function RunCard({ record }: { record: RunRecordDto }) {
           </span>
           <span>
             <span className="text-muted-foreground">페이스 </span>
-            {record.paceText}/km
+            {formatPaceLabel(record.paceText)}
           </span>
         </CardContent>
       </Card>

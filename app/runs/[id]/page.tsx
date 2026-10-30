@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { createRunRecordService } from "@/lib/notion/container";
 import { AppError } from "@/lib/errors";
+import { formatPaceLabel } from "@/lib/notion/duration";
 import { formatKoreanDate } from "@/lib/runs/date";
 
 // 노션 데이터를 5분마다 다시 가져옵니다
@@ -40,7 +41,7 @@ export default async function RunDetailPage({
     { label: "날짜", value: formatKoreanDate(record.date) },
     { label: "거리", value: `${record.distanceKm} km` },
     { label: "소요 시간", value: record.durationText },
-    { label: "평균 페이스", value: `${record.paceText}/km` },
+    { label: "평균 페이스", value: formatPaceLabel(record.paceText) },
     { label: "장소", value: valueOrDash(record.place) },
     { label: "강도", value: valueOrDash(record.intensity) },
     { label: "태그", value: record.tags.length > 0 ? record.tags.join(", ") : "-" },
