@@ -66,7 +66,7 @@ Notion data source
 - `NOTION_DATA_SOURCE_ID`는 DB ID가 아니라 data source ID입니다. SDK 기본 Notion 버전은 `2025-09-03`입니다.
 - 에러: 서비스 계층은 `lib/errors.ts`의 `AppError`(code, status)를 던집니다. API 응답 형식은 `lib/api/response.ts`의 `apiSuccess`/`apiFailure`를 씁니다. 라우트 핸들러를 새로 만들면 이 형식을 쓰세요.
 - 기간 필터와 날짜 계산은 `lib/runs/date.ts`입니다. 기준은 한국 시간이고, 주는 월요일에 시작하며, 날짜는 "YYYY-MM-DD" 문자열끼리 비교합니다.
-- 노션 호출을 줄이려고 페이지마다 `export const revalidate = 300`을 둡니다. 노션에서 바꾼 내용은 최대 5분 뒤에 반영됩니다.
+- 노션 호출을 줄이는 방식: 홈과 상세(`/runs/[id]`)는 `export const revalidate = 300`(ISR, 상세는 `generateStaticParams`가 빈 배열), 목록(`/runs`)은 동적 페이지이고 노션 조회만 `lib/runs/load.ts`의 `unstable_cache`로 5분 캐시합니다. 노션에서 바꾼 내용은 최대 5분 뒤에 반영됩니다.
 - 기록 화면의 컴포넌트는 `components/runs/`에 있습니다.
 
 ## 프로젝트 컨텍스트

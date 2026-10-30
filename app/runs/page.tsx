@@ -3,7 +3,7 @@ import { RunCard } from "@/components/runs/run-card";
 import { loadRunRecords } from "@/lib/runs/load";
 import { getPeriodRange, getTodayInKorea, isInRange, parsePeriod } from "@/lib/runs/date";
 
-// 노션 데이터를 5분마다 다시 가져옵니다
+// searchParams를 쓰는 동적 페이지라 페이지 캐시는 아닙니다. 노션 조회는 lib/runs/load.ts에서 5분 캐시합니다
 export const revalidate = 300;
 
 export default async function RunsPage({

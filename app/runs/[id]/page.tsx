@@ -8,6 +8,11 @@ import { formatKoreanDate } from "@/lib/runs/date";
 // 노션 데이터를 5분마다 다시 가져옵니다
 export const revalidate = 300;
 
+// 빌드 때 노션을 부르지 않도록 빈 배열을 두고, 첫 방문 때 렌더링해 revalidate로 캐시합니다
+export async function generateStaticParams() {
+  return [];
+}
+
 // 빈 값은 "-"로 표시해서 화면이 깨지지 않게 합니다
 function valueOrDash(value: string | null | undefined): string {
   return value && value.trim() !== "" ? value : "-";
