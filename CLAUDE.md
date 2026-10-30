@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 러닝 기록을 노션(CMS)에 쌓고 웹에서 살펴보는 프로젝트입니다. Next.js 15 + shadcn/ui 기반 스타터 킷에서 출발했으며, 현재 인증·백엔드·DB는 포함되어 있지 않습니다. 노션 연동은 아직 추가 전입니다.
 전역 규칙(한국어 응답·주석·커밋, 들여쓰기, TypeScript, Tailwind)은 `~/.claude/CLAUDE.md`를 따릅니다.
 
@@ -45,6 +47,28 @@
 - **커맨드**: `/check:all`(타입 체크 → lint → build), `/git:commit`
 - **서브에이전트**: 구현 직후에는 `code-reviewer`, 보안 점검은 `security-checker`, 빌드·타입 오류는 `debugger`를 사용합니다. 나머지는 `.claude/agents/`를 참고하세요.
 - **MCP**: `.mcp.json`에 playwright, context7, sequential-thinking, shadcn이 설정되어 있습니다. 라이브러리 문서는 context7로 확인하세요.
+
+## 구조 (큰 그림)
+
+노션 데이터는 아래 순서로만 화면까지 올라갑니다. 새 기능도 이 경로를 따릅니다.
+
+```
+Notion data source
+  → lib/notion/repository.ts  dataSources.query 호출, 커서를 따라 전체 페이지 순회
+  → lib/notion/mapper.ts      페이지 → RunRecordDto, 필수값·형식 검사 (실패 행은 제외하고 console.warn)
+  → lib/notion/service.ts     listRunRecords / findRunRecord, 노션 실패는 AppError(502)로 변환
+  → lib/notion/container.ts   환경 변수를 읽어 조립 (createRunRecordService)
+  → lib/runs/load.ts          화면용 로더, 노션 실패는 errorMessage로 돌려줌
+  → app/ 서버 컴포넌트         위 로더를 직접 호출 (현재 API 라우트는 없음)
+```
+
+- 노션 속성 이름은 `lib/notion/properties.ts`에만 둡니다. 노션에서 필드 이름이 바뀌면 여기만 고칩니다.
+- 소요시간은 노션에 텍스트(`mm:ss` 또는 `h:mm:ss`)로 저장합니다. 초 변환과 페이스 계산(`lib/notion/duration.ts`)은 앱에서 하며, 페이스는 노션에 저장하지 않습니다.
+- `NOTION_DATA_SOURCE_ID`는 DB ID가 아니라 data source ID입니다. SDK 기본 Notion 버전은 `2025-09-03`입니다.
+- 에러: 서비스 계층은 `lib/errors.ts`의 `AppError`(code, status)를 던집니다. API 응답 형식은 `lib/api/response.ts`의 `apiSuccess`/`apiFailure`를 씁니다. 라우트 핸들러를 새로 만들면 이 형식을 쓰세요.
+- 기간 필터와 날짜 계산은 `lib/runs/date.ts`입니다. 기준은 한국 시간이고, 주는 월요일에 시작하며, 날짜는 "YYYY-MM-DD" 문자열끼리 비교합니다.
+- 노션 호출을 줄이려고 페이지마다 `export const revalidate = 300`을 둡니다. 노션에서 바꾼 내용은 최대 5분 뒤에 반영됩니다.
+- 기록 화면의 컴포넌트는 `components/runs/`에 있습니다.
 
 ## 프로젝트 컨텍스트
 

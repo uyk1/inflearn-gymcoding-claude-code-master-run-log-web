@@ -37,6 +37,15 @@
         "mcp"
       ],
       "env": {}
+    },
+    "shrimp-task-manager": {
+      "command": "node",
+      "args": ["D:\\ohk1\\학습\\클로드 코드 완벽 마스터\\workspace\\mcp-shrimp-task-manager/dist/index.js"],
+      "env": {
+        "DATA_DIR": "D:\\ohk1\\학습\\클로드 코드 완벽 마스터\\workspace\\claude-code-master-run-log-web\\shrimp_data",
+        "TEMPLATES_USE": "en",
+        "ENABLE_GUI": "false"
+      }
     }
   }
 }
