@@ -37,3 +37,8 @@ export function formatPace(totalSeconds: number, distanceKm: number): string {
   const seconds = secondsPerKm % 60;
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
+
+// 페이스 문자열에 단위를 붙입니다. 페이스가 없으면("-") 단위 없이 "-"만 반환합니다
+export function formatPaceLabel(paceText: string): string {
+  return paceText === "-" ? "-" : `${paceText}/km`;
+}
