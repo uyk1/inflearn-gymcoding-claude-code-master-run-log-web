@@ -7,7 +7,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 명령어와 검증
 
-- 개발: `npm run dev` / 빌드: `npm run build` / 린트: `npm run lint`
 - 타입 체크: `npx tsc --noEmit`
 - 작업 후 전체 검증은 `/check:all` 커맨드를 사용합니다.
 - 테스트 러너는 없습니다. 동작 확인은 `npm run dev` 후 화면으로 합니다.
@@ -46,7 +45,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - PostToolUse: ts/tsx/js/mjs 편집 후 eslint를 자동 실행합니다. 오류가 나면 바로 수정하세요.
 - **커맨드**: `/check:all`(타입 체크 → lint → build), `/git:commit`
 - **서브에이전트**: 구현 직후에는 `code-reviewer`, 보안 점검은 `security-checker`, 빌드·타입 오류는 `debugger`를 사용합니다. 나머지는 `.claude/agents/`를 참고하세요.
-- **MCP**: `.mcp.json`에 playwright, context7, sequential-thinking, shadcn이 설정되어 있습니다. 라이브러리 문서는 context7로 확인하세요.
+- **MCP**: 라이브러리 문서는 context7로 확인하세요.
 
 ## 구조 (큰 그림)
 
