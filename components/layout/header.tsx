@@ -17,6 +17,12 @@ export function Header() {
             >
               홈
             </Link>
+            <Link
+              href="/runs"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              기록
+            </Link>
           </nav>
         </div>
         <ThemeToggle />

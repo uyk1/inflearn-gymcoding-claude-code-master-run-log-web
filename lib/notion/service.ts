@@ -17,4 +17,14 @@ export class RunRecordService {
       throw new AppError("NOTION_REQUEST_FAILED", "노션에서 러닝 기록을 가져오지 못했습니다.", 502);
     }
   }
+
+  // 상세 화면용 단건 조회입니다. 목록에서 찾고, 없거나 유효하지 않으면 404를 던집니다
+  async findRunRecord(id: string): Promise<RunRecordDto> {
+    const records = await this.listRunRecords();
+    const record = records.find((item) => item.id === id);
+    if (!record) {
+      throw new AppError("NOT_FOUND", "해당 러닝 기록을 찾을 수 없습니다.", 404);
+    }
+    return record;
+  }
 }
