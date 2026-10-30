@@ -47,9 +47,7 @@ npm run dev
 ```
 app/
   layout.tsx           # 루트 레이아웃 (ThemeProvider, Header, Footer)
-  page.tsx             # 홈: shadcn 컴포넌트 쇼케이스
-  form-example/
-    page.tsx           # 폼 예제 (react-hook-form + zod)
+  page.tsx             # 홈
 components/
   ui/                  # shadcn/ui 컴포넌트 (CLI로 생성)
   layout/

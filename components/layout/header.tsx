@@ -17,18 +17,6 @@ export function Header() {
             >
               홈
             </Link>
-            <Link
-              href="/form-example"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              폼 예제
-            </Link>
-            <Link
-              href="/login"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              로그인 예제
-            </Link>
           </nav>
         </div>
         <ThemeToggle />

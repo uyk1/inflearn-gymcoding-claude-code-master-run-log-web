@@ -27,7 +27,7 @@
 
 ## 기존 패턴 (새 코드는 이 방식을 따르세요)
 
-- **폼**: `useForm` + `zodResolver` + `Controller` + `Field`/`FieldError` 조합. 기준 예제는 `app/form-example/page.tsx`입니다.
+- **폼**: `useForm` + `zodResolver` + `Controller` + `Field`/`FieldError` 조합. 기준 예제 페이지는 제거되었으므로 이 조합을 직접 따르세요.
 - **다크모드**: `app/layout.tsx`의 `ThemeProvider`(`attribute="class"`)와 `<html suppressHydrationWarning>`을 유지하세요. 테마에 따라 달라지는 UI는 `mounted` 가드 뒤에서 그립니다. 기준은 `components/theme-toggle.tsx`입니다.
 - **레이아웃**: 헤더·푸터는 `components/layout/`에 있으며 `app/layout.tsx`에서 감쌉니다.
 
