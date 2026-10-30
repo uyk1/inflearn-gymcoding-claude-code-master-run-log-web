@@ -45,3 +45,8 @@
 - **커맨드**: `/check:all`(타입 체크 → lint → build), `/git:commit`
 - **서브에이전트**: 구현 직후에는 `code-reviewer`, 보안 점검은 `security-checker`, 빌드·타입 오류는 `debugger`를 사용합니다. 나머지는 `.claude/agents/`를 참고하세요.
 - **MCP**: `.mcp.json`에 playwright, context7, sequential-thinking, shadcn이 설정되어 있습니다. 라이브러리 문서는 context7로 확인하세요.
+
+## 프로젝트 컨텍스트
+
+- PRD 문서: @docs/PRD.md
+- 개발 로드맵: @docs/ROADMAP.md
