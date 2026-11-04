@@ -1,7 +1,7 @@
 import type { PageObjectResponse } from "@notionhq/client";
 import { RUN_PROPERTY } from "@/lib/notion/properties";
 import { calcPaceSecondsPerKm, formatDuration, parseDurationToSeconds } from "@/lib/notion/duration";
-import type { RunRecordDto } from "@/lib/notion/dto";
+import type { ExcludedReason, ExcludedRunDto, RunRecordDto } from "@/lib/notion/dto";
 
 type NotionProperty = PageObjectResponse["properties"][string];
 
@@ -35,8 +35,13 @@ function readMultiSelect(property: NotionProperty | undefined): string[] {
   return property.multi_select.map((option) => option.name);
 }
 
-// 노션 페이지 한 건을 RunRecordDto로 바꿉니다. 필수 값이 없거나 형식이 틀리면 null을 반환합니다
-export function toRunRecordDto(page: PageObjectResponse): RunRecordDto | null {
+// 노션 페이지 한 건의 변환 결과입니다. 정상 기록이거나 제외 정보 중 하나입니다
+export type RunMapResult =
+  | { kind: "record"; record: RunRecordDto }
+  | { kind: "excluded"; excluded: ExcludedRunDto };
+
+// 노션 페이지 한 건을 RunRecordDto로 바꿉니다. 필수 값이 없거나 형식이 틀리면 제외 정보를 반환합니다
+export function toRunMapResult(page: PageObjectResponse): RunMapResult {
   const properties = page.properties;
 
   const title = readTitle(properties[RUN_PROPERTY.title]);
@@ -47,7 +52,7 @@ export function toRunRecordDto(page: PageObjectResponse): RunRecordDto | null {
 
   if (!title || !date || distanceKm === null || durationSeconds === null) {
     // 로그에는 페이지 id와 사유만 남기고, 사용자가 입력한 값은 넣지 않습니다
-    const reasons: string[] = [];
+    const reasons: ExcludedReason[] = [];
     if (!title) reasons.push("제목 없음");
     if (!date) reasons.push("날짜 없음");
     if (distanceKm === null) reasons.push("거리 없음");
@@ -55,10 +60,13 @@ export function toRunRecordDto(page: PageObjectResponse): RunRecordDto | null {
       reasons.push(durationRaw.trim() === "" ? "소요시간 없음" : "소요시간 형식 오류");
     }
     console.warn(`[notion] 필수 값이 없거나 형식이 맞지 않아 제외합니다: ${page.id} (${reasons.join(", ")})`);
-    return null;
+    return {
+      kind: "excluded",
+      excluded: { pageId: page.id, title: title || null, reasons, notionUrl: page.url },
+    };
   }
 
-  return {
+  const record: RunRecordDto = {
     id: page.id,
     title,
     date,
@@ -74,4 +82,5 @@ export function toRunRecordDto(page: PageObjectResponse): RunRecordDto | null {
     externalId: readRichText(properties[RUN_PROPERTY.externalId]),
     notionUrl: page.url,
   };
+  return { kind: "record", record };
 }
