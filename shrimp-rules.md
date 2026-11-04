@@ -63,7 +63,7 @@
 ### 4-3. 새 화면(페이지)을 추가할 때
 
 1. 노션 데이터가 필요하면 `loadRunRecords()`(목록) 또는 `createRunRecordService().findRunRecord(id)`(단건)를 씁니다.
-2. 노션 호출이 있는 페이지 파일 맨 위에 `export const revalidate = 300;`을 둡니다. `searchParams`를 쓰는 동적 페이지는 페이지 캐시가 안 되므로, `loadRunRecords()`(내부 `unstable_cache` 5분)로 노션 호출을 줄입니다. 동적 세그먼트(`[id]`)는 `generateStaticParams`가 빈 배열을 반환해야 ISR이 됩니다.
+2. 노션 호출이 있는 페이지 파일 맨 위에 `export const revalidate = 60;`을 둡니다. `searchParams`를 쓰는 동적 페이지는 페이지 캐시가 안 되므로, `loadRunRecords()`(내부 `unstable_cache` 60초)로 노션 호출을 줄입니다. 동적 세그먼트(`[id]`)는 `generateStaticParams`가 빈 배열을 반환해야 ISR이 됩니다.
 3. 화면 이동 링크가 필요하면 `components/layout/header.tsx`의 `nav`에 추가합니다.
 4. 기록 전용 컴포넌트는 `components/runs/`에 둡니다.
 
@@ -97,12 +97,12 @@ Notion data source
   → mapper (페이지 → RunRecordDto 또는 ExcludedRunDto, 실패 행은 제외하고 사유와 함께 console.warn)
   → service (listRunRecords({ records, excluded }) / findRunRecord, 노션 실패 → AppError 502)
   → container (환경 변수 → 서비스 조립)
-  → lib/runs/load.ts (화면용, 조회만 unstable_cache 5분, errorMessage 반환)
-  → app/ 서버 컴포넌트 (직접 호출, 홈·상세는 revalidate = 300)
+  → lib/runs/load.ts (화면용, 조회만 unstable_cache 60초, errorMessage 반환)
+  → app/ 서버 컴포넌트 (직접 호출, 홈·상세는 revalidate = 60)
 ```
 
 - 새 기능은 이 흐름을 벗어나지 않습니다.
-- 노션에서 바뀐 내용은 최대 5분 뒤에 화면에 반영됩니다. 이 지연을 버그로 고치지 않습니다.
+- 노션에서 바뀐 내용은 접속이 꾸준할 때 최대 1~2분 뒤에 화면에 반영됩니다. 한동안 접속이 없었다면 첫 접속에는 이전 내용이 보여 새로고침이 필요할 수 있습니다. 이 지연을 버그로 고치지 않습니다.
 
 ### 검증 순서
 

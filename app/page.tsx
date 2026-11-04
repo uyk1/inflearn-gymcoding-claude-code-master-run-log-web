@@ -6,8 +6,8 @@ import { RunCard } from "@/components/runs/run-card";
 import { loadRunRecords } from "@/lib/runs/load";
 import { getPeriodRange, getTodayInKorea, isInRange } from "@/lib/runs/date";
 
-// 노션 데이터를 5분마다 다시 가져옵니다 (PRD 8장: API 호출 수 줄이기)
-export const revalidate = 300;
+// 노션 데이터를 60초마다 다시 가져옵니다 (PRD 8장: API 호출 수 줄이기)
+export const revalidate = 60;
 
 const RECENT_COUNT = 3;
 

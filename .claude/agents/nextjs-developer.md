@@ -26,7 +26,7 @@ model: sonnet
 - **`app/`은 라우팅 전용**입니다. 화면 컴포넌트는 `components/`, 데이터·로직은 `lib/`에 둡니다. (Next.js 문서의 "프로젝트 파일을 `app` 밖에 두는 방식"입니다.)
 - 노션 데이터는 반드시 `lib/notion/`을 거칩니다. 페이지에서 노션을 직접 호출하지 않습니다.
 - 기본은 서버 컴포넌트입니다. 상태, 이벤트, 브라우저 API가 필요한 부분만 `"use client"`로 분리합니다.
-- 노션을 호출하는 페이지에는 `export const revalidate = 300;`을 둡니다.
+- 노션을 호출하는 페이지에는 `export const revalidate = 60;`을 둡니다.
 - 새 화면을 추가하면 `components/layout/header.tsx`의 메뉴가 필요한지 확인합니다.
 
 ## 라우팅 파일 규칙 (Next.js 15)

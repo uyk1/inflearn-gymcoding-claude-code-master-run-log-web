@@ -7,8 +7,8 @@ import { AppError } from "@/lib/errors";
 import { formatPaceLabel } from "@/lib/notion/duration";
 import { formatKoreanDate } from "@/lib/runs/date";
 
-// 노션 데이터를 5분마다 다시 가져옵니다
-export const revalidate = 300;
+// 노션 데이터를 60초마다 다시 가져옵니다
+export const revalidate = 60;
 
 // 빌드 때 노션을 부르지 않도록 빈 배열을 두고, 첫 방문 때 렌더링해 revalidate로 캐시합니다
 export async function generateStaticParams() {
