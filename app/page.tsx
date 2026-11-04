@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
+import { EmptyState } from "@/components/common/empty-state";
+import { ErrorMessage } from "@/components/common/error-message";
 import { RunCard } from "@/components/runs/run-card";
 import { loadRunRecords } from "@/lib/runs/load";
 import { getPeriodRange, getTodayInKorea, isInRange } from "@/lib/runs/date";
@@ -40,9 +42,9 @@ export default async function HomePage() {
         </div>
 
         {errorMessage ? (
-          <p className="text-destructive text-sm">{errorMessage}</p>
+          <ErrorMessage message={errorMessage} />
         ) : recentRecords.length === 0 ? (
-          <p className="text-muted-foreground text-sm">아직 기록이 없습니다. 노션에서 기록을 추가해 주세요.</p>
+          <EmptyState>아직 기록이 없습니다. 노션에서 기록을 추가해 주세요.</EmptyState>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {recentRecords.map((record) => (

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ErrorMessage } from "@/components/common/error-message";
 import { buttonVariants } from "@/components/ui/button";
 import { createRunRecordService } from "@/lib/notion/container";
 import { AppError } from "@/lib/errors";
@@ -32,7 +33,7 @@ export default async function RunDetailPage({
   } catch (error) {
     if (error instanceof AppError && error.code === "NOT_FOUND") notFound();
     if (error instanceof AppError) {
-      return <p className="text-destructive text-sm">{error.message}</p>;
+      return <ErrorMessage message={error.message} />;
     }
     throw error;
   }

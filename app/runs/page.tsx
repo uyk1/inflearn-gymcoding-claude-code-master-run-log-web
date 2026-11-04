@@ -1,3 +1,5 @@
+import { EmptyState } from "@/components/common/empty-state";
+import { ErrorMessage } from "@/components/common/error-message";
 import { PeriodTabs } from "@/components/runs/period-tabs";
 import { RunCard } from "@/components/runs/run-card";
 import { loadRunRecords } from "@/lib/runs/load";
@@ -26,9 +28,9 @@ export default async function RunsPage({
       </div>
 
       {errorMessage ? (
-        <p className="text-destructive text-sm">{errorMessage}</p>
+        <ErrorMessage message={errorMessage} />
       ) : filtered.length === 0 ? (
-        <p className="text-muted-foreground text-sm">해당 기간의 기록이 없습니다.</p>
+        <EmptyState>해당 기간의 기록이 없습니다.</EmptyState>
       ) : (
         <>
           <p className="text-muted-foreground text-sm">{filtered.length}건</p>
