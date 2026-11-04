@@ -15,8 +15,8 @@
 |---|---|---|
 | `lib/notion/properties.ts` | 노션 속성 이름 상수 | 노션 속성 이름은 **이 파일에서만** 씁니다 |
 | `lib/notion/duration.ts` | 소요시간 파싱, 시간 표시, 페이스 계산 | 순수 함수로 유지합니다 (import 없음) |
-| `lib/notion/dto.ts` | `RunRecordDto` | 화면과 API가 쓰는 형태만 둡니다 |
-| `lib/notion/mapper.ts` | 노션 페이지 → DTO | 필수값 검사와 제외 로그는 여기서 합니다 |
+| `lib/notion/dto.ts` | `RunRecordDto`, `ExcludedRunDto`, `RunRecordListDto` | 화면과 API가 쓰는 형태만 둡니다 |
+| `lib/notion/mapper.ts` | 노션 페이지 → DTO | 필수값 검사와 제외 로그, 제외 행 정보(`ExcludedRunDto`)는 여기서 만듭니다 |
 | `lib/notion/repository.ts` | dataSources.query 호출과 커서 순회 | 응답 변환을 하지 않습니다 |
 | `lib/notion/service.ts` | `listRunRecords`, `findRunRecord` | 노션 실패는 `AppError`로 바꿉니다 |
 | `lib/notion/container.ts` | 환경 변수를 읽어 서비스 조립 | 의존성 조립은 여기서만 합니다 |
@@ -93,8 +93,8 @@
 ```
 Notion data source
   → repository (dataSources.query, 커서 순회)
-  → mapper (페이지 → RunRecordDto, 실패 행은 제외하고 사유와 함께 console.warn)
-  → service (listRunRecords / findRunRecord, 노션 실패 → AppError 502)
+  → mapper (페이지 → RunRecordDto 또는 ExcludedRunDto, 실패 행은 제외하고 사유와 함께 console.warn)
+  → service (listRunRecords({ records, excluded }) / findRunRecord, 노션 실패 → AppError 502)
   → container (환경 변수 → 서비스 조립)
   → lib/runs/load.ts (화면용, 조회만 unstable_cache 5분, errorMessage 반환)
   → app/ 서버 컴포넌트 (직접 호출, 홈·상세는 revalidate = 300)
