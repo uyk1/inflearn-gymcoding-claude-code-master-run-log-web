@@ -28,7 +28,7 @@ export function RunCard({ record }: { record: RunRecordDto }) {
             </div>
             <div className="flex gap-1">
               <dt className="text-muted-foreground">페이스</dt>
-              <dd>{formatPaceLabel(record.paceText)}</dd>
+              <dd>{formatPaceLabel(record.paceSecondsPerKm)}</dd>
             </div>
           </dl>
         </CardContent>

@@ -59,7 +59,7 @@ export default async function RunDetailPage({
     { label: "날짜", value: formatKoreanDate(record.date) },
     { label: "거리", value: `${record.distanceKm} km` },
     { label: "소요 시간", value: record.durationText },
-    { label: "평균 페이스", value: formatPaceLabel(record.paceText) },
+    { label: "평균 페이스", value: formatPaceLabel(record.paceSecondsPerKm) },
     { label: "장소", value: valueOrDash(record.place) },
     { label: "강도", value: valueOrDash(record.intensity) },
     { label: "태그", value: record.tags.length > 0 ? record.tags.join(", ") : "-" },

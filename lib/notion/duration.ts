@@ -28,17 +28,17 @@ export function formatDuration(totalSeconds: number): string {
   return `${minutes}:${ss}`;
 }
 
-// 평균 페이스(km당 시간)를 m:ss 형식으로 만듭니다. 거리가 0 이하이면 "-"를 반환합니다
-export function formatPace(totalSeconds: number, distanceKm: number): string {
-  if (distanceKm <= 0) return "-";
-
-  const secondsPerKm = Math.round(totalSeconds / distanceKm);
-  const minutes = Math.floor(secondsPerKm / 60);
-  const seconds = secondsPerKm % 60;
-  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+// 평균 페이스를 km당 초 단위 숫자로 계산합니다. 거리가 0 이하이거나 유한한 숫자가 아니면 null을 반환합니다
+export function calcPaceSecondsPerKm(totalSeconds: number, distanceKm: number): number | null {
+  if (!Number.isFinite(distanceKm) || distanceKm <= 0) return null;
+  return Math.round(totalSeconds / distanceKm);
 }
 
-// 페이스 문자열에 단위를 붙입니다. 페이스가 없으면("-") 단위 없이 "-"만 반환합니다
-export function formatPaceLabel(paceText: string): string {
-  return paceText === "-" ? "-" : `${paceText}/km`;
+// 페이스(km당 초)를 화면 표시용 m:ss/km로 바꿉니다. 페이스가 없으면(null) "-"를 반환합니다. 분은 상한을 두지 않습니다
+export function formatPaceLabel(paceSecondsPerKm: number | null): string {
+  if (paceSecondsPerKm === null) return "-";
+
+  const minutes = Math.floor(paceSecondsPerKm / 60);
+  const seconds = paceSecondsPerKm % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}/km`;
 }

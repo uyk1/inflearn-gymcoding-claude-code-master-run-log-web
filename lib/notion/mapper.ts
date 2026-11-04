@@ -1,6 +1,6 @@
 import type { PageObjectResponse } from "@notionhq/client";
 import { RUN_PROPERTY } from "@/lib/notion/properties";
-import { formatDuration, formatPace, parseDurationToSeconds } from "@/lib/notion/duration";
+import { calcPaceSecondsPerKm, formatDuration, parseDurationToSeconds } from "@/lib/notion/duration";
 import type { RunRecordDto } from "@/lib/notion/dto";
 
 type NotionProperty = PageObjectResponse["properties"][string];
@@ -57,7 +57,7 @@ export function toRunRecordDto(page: PageObjectResponse): RunRecordDto | null {
     distanceKm,
     durationText: formatDuration(durationSeconds),
     durationSeconds,
-    paceText: formatPace(durationSeconds, distanceKm),
+    paceSecondsPerKm: calcPaceSecondsPerKm(durationSeconds, distanceKm),
     place: readRichText(properties[RUN_PROPERTY.place]),
     intensity: readSelect(properties[RUN_PROPERTY.intensity]),
     memo: readRichText(properties[RUN_PROPERTY.memo]),
