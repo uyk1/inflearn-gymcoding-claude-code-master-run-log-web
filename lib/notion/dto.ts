@@ -6,7 +6,7 @@ export interface RunRecordDto {
   distanceKm: number;
   durationText: string;
   durationSeconds: number;
-  paceText: string;
+  paceSecondsPerKm: number | null;
   place: string;
   intensity: string | null;
   memo: string;
