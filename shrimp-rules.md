@@ -93,7 +93,7 @@
 ```
 Notion data source
   → repository (dataSources.query, 커서 순회)
-  → mapper (페이지 → RunRecordDto, 실패 행은 제외하고 console.warn)
+  → mapper (페이지 → RunRecordDto, 실패 행은 제외하고 사유와 함께 console.warn)
   → service (listRunRecords / findRunRecord, 노션 실패 → AppError 502)
   → container (환경 변수 → 서비스 조립)
   → lib/runs/load.ts (화면용, 조회만 unstable_cache 5분, errorMessage 반환)

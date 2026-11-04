@@ -54,7 +54,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```
 Notion data source
   → lib/notion/repository.ts  dataSources.query 호출, 커서를 따라 전체 페이지 순회
-  → lib/notion/mapper.ts      페이지 → RunRecordDto, 필수값·형식 검사 (실패 행은 제외하고 console.warn)
+  → lib/notion/mapper.ts      페이지 → RunRecordDto, 필수값·형식 검사 (실패 행은 제외하고 사유와 함께 console.warn)
   → lib/notion/service.ts     listRunRecords / findRunRecord, 노션 실패는 AppError(502)로 변환
   → lib/notion/container.ts   환경 변수를 읽어 조립 (createRunRecordService)
   → lib/runs/load.ts          화면용 로더, 노션 실패는 errorMessage로 돌려줌
@@ -62,7 +62,7 @@ Notion data source
 ```
 
 - 노션 속성 이름은 `lib/notion/properties.ts`에만 둡니다. 노션에서 필드 이름이 바뀌면 여기만 고칩니다.
-- 소요시간은 노션에 텍스트(`mm:ss` 또는 `h:mm:ss`)로 저장합니다. 초 변환과 페이스 계산(`lib/notion/duration.ts`)은 앱에서 하며, 페이스는 노션에 저장하지 않습니다.
+- 소요시간은 노션에 텍스트(`mm:ss` 또는 `h:mm:ss`, 초와 `h:mm:ss`의 분은 두 자리, 예: `12:5`는 제외)로 저장합니다. 초 변환과 페이스 계산(`lib/notion/duration.ts`)은 앱에서 하며, 페이스는 노션에 저장하지 않습니다.
 - `NOTION_DATA_SOURCE_ID`는 DB ID가 아니라 data source ID입니다. SDK 기본 Notion 버전은 `2025-09-03`입니다.
 - 에러: 서비스 계층은 `lib/errors.ts`의 `AppError`(code, status)를 던집니다. API 응답 형식은 `lib/api/response.ts`의 `apiSuccess`/`apiFailure`를 씁니다. 라우트 핸들러를 새로 만들면 이 형식을 쓰세요.
 - 기간 필터와 날짜 계산은 `lib/runs/date.ts`입니다. 기준은 한국 시간이고, 주는 월요일에 시작하며, 날짜는 "YYYY-MM-DD" 문자열끼리 비교합니다.
