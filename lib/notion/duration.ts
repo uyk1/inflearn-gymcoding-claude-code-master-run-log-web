@@ -1,8 +1,9 @@
 // 소요시간 문자열(mm:ss 또는 h:mm:ss)을 초 단위로 바꿉니다. 형식이 맞지 않으면 null을 반환합니다
+// 첫 구간은 자릿수 자유, 이후 구간(초, 분)은 반드시 두 자리입니다 ("12:5" 같은 오타 방지)
 export function parseDurationToSeconds(value: string): number | null {
   const parts = value.trim().split(":");
   if (parts.length < 2 || parts.length > 3) return null;
-  if (!parts.every((part) => /^\d+$/.test(part))) return null;
+  if (!parts.every((part, index) => (index === 0 ? /^\d+$/ : /^\d{2}$/).test(part))) return null;
 
   const numbers = parts.map(Number);
   const [hours, minutes, seconds] = parts.length === 3 ? numbers : [0, ...numbers];

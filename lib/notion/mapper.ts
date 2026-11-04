@@ -46,7 +46,15 @@ export function toRunRecordDto(page: PageObjectResponse): RunRecordDto | null {
   const durationSeconds = parseDurationToSeconds(durationRaw);
 
   if (!title || !date || distanceKm === null || durationSeconds === null) {
-    console.warn(`[notion] 필수 값이 없거나 형식이 맞지 않아 제외합니다: ${page.id}`);
+    // 로그에는 페이지 id와 사유만 남기고, 사용자가 입력한 값은 넣지 않습니다
+    const reasons: string[] = [];
+    if (!title) reasons.push("제목 없음");
+    if (!date) reasons.push("날짜 없음");
+    if (distanceKm === null) reasons.push("거리 없음");
+    if (durationSeconds === null) {
+      reasons.push(durationRaw.trim() === "" ? "소요시간 없음" : "소요시간 형식 오류");
+    }
+    console.warn(`[notion] 필수 값이 없거나 형식이 맞지 않아 제외합니다: ${page.id} (${reasons.join(", ")})`);
     return null;
   }
 

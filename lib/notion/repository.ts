@@ -25,6 +25,10 @@ export class RunRecordRepository {
         if (isFullPage(result)) pages.push(result);
       }
 
+      if (response.has_more && !response.next_cursor) {
+        console.warn("[notion] has_more가 true인데 next_cursor가 없어 조회를 중단합니다. 이후 기록이 누락될 수 있습니다");
+      }
+
       cursor = response.has_more && response.next_cursor ? response.next_cursor : undefined;
     } while (cursor);
 
