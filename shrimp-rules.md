@@ -22,6 +22,7 @@
 | `lib/notion/container.ts` | 환경 변수를 읽어 서비스 조립 | 의존성 조립은 여기서만 합니다 |
 | `lib/notion/client.ts` | 노션 클라이언트 생성 | 서버 전용입니다 |
 | `lib/runs/load.ts` | 화면용 로더 | 노션 실패를 `errorMessage`로 돌려줍니다 |
+| `lib/notion/date.ts` | 노션 날짜(시간 포함 가능) → 한국 시간 기준 "YYYY-MM-DD" | mapper만 호출합니다. 형식이 틀리면 null이고 제외 사유는 "날짜 형식 오류"입니다 |
 | `lib/runs/date.ts` | 기간 종류, 날짜 범위, 한국 시간 기준 날짜 | 날짜 비교는 "YYYY-MM-DD" 문자열로 합니다 |
 | `lib/errors.ts` | `AppError(code, message, status)` | 예상 가능한 에러는 이 클래스로 던집니다 |
 | `lib/api/response.ts` | `apiSuccess`, `apiFailure`, `ApiResponse` | API 응답은 이 형식만 씁니다 |

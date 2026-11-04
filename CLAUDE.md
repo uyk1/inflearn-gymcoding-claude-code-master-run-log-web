@@ -65,7 +65,7 @@ Notion data source
 - 소요시간은 노션에 텍스트(`mm:ss` 또는 `h:mm:ss`, 초와 `h:mm:ss`의 분은 두 자리, 예: `12:5`는 제외)로 저장합니다. 초 변환과 페이스 계산(`lib/notion/duration.ts`)은 앱에서 하며, 페이스는 노션에 저장하지 않습니다.
 - `NOTION_DATA_SOURCE_ID`는 DB ID가 아니라 data source ID입니다. SDK 기본 Notion 버전은 `2025-09-03`입니다.
 - 에러: 서비스 계층은 `lib/errors.ts`의 `AppError`(code, status)를 던집니다. API 응답 형식은 `lib/api/response.ts`의 `apiSuccess`/`apiFailure`를 씁니다. 라우트 핸들러를 새로 만들면 이 형식을 쓰세요.
-- 기간 필터와 날짜 계산은 `lib/runs/date.ts`입니다. 기준은 한국 시간이고, 주는 월요일에 시작하며, 날짜는 "YYYY-MM-DD" 문자열끼리 비교합니다.
+- 기간 필터와 날짜 계산은 `lib/runs/date.ts`입니다. 기준은 한국 시간이고, 주는 월요일에 시작하며, 날짜는 "YYYY-MM-DD" 문자열끼리 비교합니다. 노션 날짜에 시간이 포함돼 있어도 `lib/notion/date.ts`(mapper가 사용)가 한국 시간 기준 "YYYY-MM-DD"로 바꿔 주므로 화면과 통계는 항상 이 형식만 받습니다.
 - 노션 호출을 줄이는 방식: 홈과 상세(`/runs/[id]`)는 `export const revalidate = 300`(ISR, 상세는 `generateStaticParams`가 빈 배열), 목록(`/runs`)은 동적 페이지이고 노션 조회만 `lib/runs/load.ts`의 `unstable_cache`로 5분 캐시합니다. 노션에서 바꾼 내용은 최대 5분 뒤에 반영됩니다. 테스트할 때만 `.env.local`의 `RUN_RECORDS_REVALIDATE_SECONDS`로 목록 캐시를 줄일 수 있고(홈과 상세의 ISR은 그대로), 운영에는 설정하지 않습니다.
 - 기록 화면의 컴포넌트는 `components/runs/`에 있습니다.
 
