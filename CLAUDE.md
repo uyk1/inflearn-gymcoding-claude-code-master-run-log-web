@@ -54,8 +54,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```
 Notion data source
   → lib/notion/repository.ts  dataSources.query 호출, 커서를 따라 전체 페이지 순회
-  → lib/notion/mapper.ts      페이지 → RunRecordDto, 필수값·형식 검사 (실패 행은 제외하고 사유와 함께 console.warn)
-  → lib/notion/service.ts     listRunRecords / findRunRecord, 노션 실패는 AppError(502)로 변환
+  → lib/notion/mapper.ts      페이지 → RunRecordDto 또는 ExcludedRunDto, 필수값·형식 검사 (실패 행은 제외하고 사유와 함께 console.warn)
+  → lib/notion/service.ts     listRunRecords({ records, excluded }) / findRunRecord, 노션 실패는 AppError(502)로 변환
   → lib/notion/container.ts   환경 변수를 읽어 조립 (createRunRecordService)
   → lib/runs/load.ts          화면용 로더, 노션 실패는 errorMessage로 돌려줌
   → app/ 서버 컴포넌트         위 로더를 직접 호출 (현재 API 라우트는 없음)
