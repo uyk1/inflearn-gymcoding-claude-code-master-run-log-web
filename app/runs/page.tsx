@@ -34,11 +34,13 @@ export default async function RunsPage({
       ) : (
         <>
           <p className="text-muted-foreground text-sm">{filtered.length}건</p>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filtered.map((record) => (
-              <RunCard key={record.id} record={record} />
+              <li key={record.id}>
+                <RunCard record={record} />
+              </li>
             ))}
-          </div>
+          </ul>
         </>
       )}
     </div>
