@@ -15,6 +15,18 @@ export async function generateStaticParams() {
   return [];
 }
 
+// 목록으로 돌아가는 링크. 정상 화면과 오류 화면이 같이 씁니다
+function BackLink() {
+  return (
+    <Link
+      href="/runs"
+      className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-block focus-visible:ring-offset-background rounded-sm text-sm outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+    >
+      ← 러닝 기록
+    </Link>
+  );
+}
+
 // 빈 값은 "-"로 표시해서 화면이 깨지지 않게 합니다
 function valueOrDash(value: string | null | undefined): string {
   return value && value.trim() !== "" ? value : "-";
@@ -33,7 +45,12 @@ export default async function RunDetailPage({
   } catch (error) {
     if (error instanceof AppError && error.code === "NOT_FOUND") notFound();
     if (error instanceof AppError) {
-      return <ErrorMessage message={error.message} />;
+      return (
+        <div className="mx-auto max-w-2xl space-y-3">
+          <BackLink />
+          <ErrorMessage message={error.message} />
+        </div>
+      );
     }
     throw error;
   }
@@ -54,9 +71,7 @@ export default async function RunDetailPage({
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="space-y-1">
-        <Link href="/runs" className="text-muted-foreground hover:text-foreground text-sm">
-          ← 러닝 기록
-        </Link>
+        <BackLink />
         <h1 className="text-2xl font-bold tracking-tight break-words">{record.title}</h1>
       </div>
 
