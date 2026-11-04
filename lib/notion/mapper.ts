@@ -1,5 +1,6 @@
 import type { PageObjectResponse } from "@notionhq/client";
 import { RUN_PROPERTY } from "@/lib/notion/properties";
+import { normalizeNotionDate } from "@/lib/notion/date";
 import { calcPaceSecondsPerKm, formatDuration, parseDurationToSeconds } from "@/lib/notion/duration";
 import type { ExcludedReason, ExcludedRunDto, RunRecordDto } from "@/lib/notion/dto";
 
@@ -45,7 +46,9 @@ export function toRunMapResult(page: PageObjectResponse): RunMapResult {
   const properties = page.properties;
 
   const title = readTitle(properties[RUN_PROPERTY.title]);
-  const date = readDate(properties[RUN_PROPERTY.date]);
+  const rawDate = readDate(properties[RUN_PROPERTY.date]);
+  // 시간이 포함된 날짜도 한국 시간 기준 YYYY-MM-DD로 맞춥니다. 형식이 틀리면 null입니다
+  const date = rawDate === null ? null : normalizeNotionDate(rawDate);
   const distanceKm = readNumber(properties[RUN_PROPERTY.distanceKm]);
   const durationRaw = readRichText(properties[RUN_PROPERTY.duration]);
   const durationSeconds = parseDurationToSeconds(durationRaw);
@@ -54,7 +57,7 @@ export function toRunMapResult(page: PageObjectResponse): RunMapResult {
     // 로그에는 페이지 id와 사유만 남기고, 사용자가 입력한 값은 넣지 않습니다
     const reasons: ExcludedReason[] = [];
     if (!title) reasons.push("제목 없음");
-    if (!date) reasons.push("날짜 없음");
+    if (!date) reasons.push(rawDate === null ? "날짜 없음" : "날짜 형식 오류");
     if (distanceKm === null) reasons.push("거리 없음");
     if (durationSeconds === null) {
       reasons.push(durationRaw.trim() === "" ? "소요시간 없음" : "소요시간 형식 오류");

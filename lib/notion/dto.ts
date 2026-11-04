@@ -20,6 +20,7 @@ export interface RunRecordDto {
 export type ExcludedReason =
   | "제목 없음"
   | "날짜 없음"
+  | "날짜 형식 오류"
   | "거리 없음"
   | "소요시간 없음"
   | "소요시간 형식 오류";
