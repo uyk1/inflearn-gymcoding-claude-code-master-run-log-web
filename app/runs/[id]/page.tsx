@@ -90,7 +90,8 @@ export default async function RunDetailPage({
         href={record.notionUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className={buttonVariants({ variant: "outline" })}
+        // cn(twMerge)은 buttonVariants의 border-transparent와 outline의 border-border 충돌을 정리합니다. 지우면 라이트 모드 테두리가 사라집니다
+        className={cn(buttonVariants({ variant: "outline" }))}
       >
         노션에서 원본 보기
       </a>
