@@ -69,6 +69,8 @@ Notion data source
 - 기간별 통계(주간·월간 총 거리, 총 시간, 평균 페이스)는 `lib/runs/stats.ts`의 `buildPeriodStats`입니다. 노션을 다시 부르지 않고 `loadRunRecords()`의 기록을 입력으로 받으며, 평균 페이스는 기록별 페이스의 평균이 아니라 기간 총 시간 ÷ 총 거리입니다. 거리 0 이하 기록은 합계에서 제외합니다.
 - 노션 호출을 줄이는 방식: 홈과 상세(`/runs/[id]`)는 `export const revalidate = 60`(ISR, 상세는 `generateStaticParams`가 빈 배열), 목록(`/runs`)은 동적 페이지이고 노션 조회만 `lib/runs/load.ts`의 `unstable_cache`로 60초 캐시합니다. 노션에서 바꾼 내용은 접속이 꾸준할 때 목록과 상세는 최대 약 1분, 홈은 최대 약 2분(ISR 60초 + 목록 캐시 60초) 뒤에 반영됩니다. 상세는 목록 캐시를 거치지 않고 직접 조회합니다. 한동안 접속이 없었다면 첫 접속에는 이전 내용이 보일 수 있어 새로고침이 필요할 수 있습니다. 테스트할 때만 `.env.local`의 `RUN_RECORDS_REVALIDATE_SECONDS`로 목록 캐시를 줄일 수 있고(홈은 같은 조회 캐시를 읽어 ISR 주기도 그 값으로 함께 짧아지고, 상세는 영향이 없습니다), 운영에는 설정하지 않습니다.
 - 기록 화면의 컴포넌트는 `components/runs/`에 있습니다. 제외된 기록 안내(`excluded-notice.tsx`)는 `loadRunRecords()`가 돌려주는 `excluded`를 씁니다.
+- 통계 화면은 `app/stats/page.tsx`(`?view=week|month`, 주간 8주·월간 6개월)이고 컴포넌트는 `components/stats/`에 있습니다. `/runs`처럼 `searchParams`를 쓰는 동적 페이지라 `revalidate`는 효과가 없고 노션 조회만 60초 캐시됩니다. 차트 두 개(`distance-chart.tsx`, `pace-chart.tsx`)만 `"use client"`이고 recharts는 이 두 파일에서만 import합니다.
+- 차트(recharts 3.8 + shadcn `chart`)를 만들 때: `components/ui/chart.tsx`는 수정하지 않습니다. 이 조합에서는 축 글자 색이 적용되지 않아 `XAxis`/`YAxis`에 `tick={{ fill: "var(--muted-foreground)" }}`를 직접 줍니다. 색은 `--chart-N` 토큰만 쓰고(앱은 무채색이며 다크에서 `--chart-3`은 대비가 부족해 선 색에 `--muted-foreground`를 씁니다), `ChartContainer`에는 반드시 높이를 줍니다.
 
 ## 프로젝트 컨텍스트
 
