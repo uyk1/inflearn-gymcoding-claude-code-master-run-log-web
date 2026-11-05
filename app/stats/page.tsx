@@ -7,7 +7,7 @@ import { StatsSummary } from "@/components/stats/stats-summary";
 import { StatsViewTabs } from "@/components/stats/stats-view-tabs";
 import { getTodayInKorea } from "@/lib/runs/date";
 import { loadRunRecords } from "@/lib/runs/load";
-import { buildPeriodStats, type StatsGranularity } from "@/lib/runs/stats";
+import { buildPeriodStats, PLAUSIBLE_PACE_RANGE, type StatsGranularity } from "@/lib/runs/stats";
 
 // searchParams를 쓰는 동적 페이지라 페이지 캐시는 아닙니다. 노션 조회는 lib/runs/load.ts에서 기본 60초 캐시합니다
 export const revalidate = 60;
@@ -31,7 +31,8 @@ export default async function StatsPage({
   const view = parseView(viewParam);
 
   const { records, excluded, errorMessage } = await loadRunRecords();
-  const stats = buildPeriodStats(records, view, getTodayInKorea(), PERIOD_COUNT[view]);
+  // 입력 실수로 보이는 비현실적인 페이스(예: 0.001km 기록)는 표시하지 않습니다
+  const stats = buildPeriodStats(records, view, getTodayInKorea(), PERIOD_COUNT[view], PLAUSIBLE_PACE_RANGE);
   const current = stats.at(-1);
   const hasAnyRun = stats.some((period) => period.runCount > 0);
 
