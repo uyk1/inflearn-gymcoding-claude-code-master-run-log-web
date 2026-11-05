@@ -23,10 +23,14 @@ export default function RunsLoading() {
               <div className="bg-muted-foreground/15 h-5 w-28 rounded-md" />
               <div className="bg-muted-foreground/15 h-5.5 w-2/3 rounded-md" />
             </div>
-            <div className="flex flex-wrap gap-x-6 gap-y-2">
-              <div className="bg-muted-foreground/15 h-5 w-24 rounded-md" />
-              <div className="bg-muted-foreground/15 h-5 w-24 rounded-md" />
-              <div className="bg-muted-foreground/15 h-5 w-24 rounded-md" />
+            {/* 3열, 칸마다 라벨 줄(16px) + 값 줄(20px) */}
+            <div className="grid grid-cols-3 gap-2">
+              {Array.from({ length: 3 }).map((_, cell) => (
+                <div key={cell} className="flex min-w-0 flex-col gap-1">
+                  <div className="bg-muted-foreground/15 h-4 w-8 rounded-md" />
+                  <div className="bg-muted-foreground/15 h-5 w-14 rounded-md" />
+                </div>
+              ))}
             </div>
           </div>
         ))}
