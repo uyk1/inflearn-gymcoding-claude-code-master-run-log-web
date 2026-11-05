@@ -43,3 +43,9 @@ export function formatPaceLabel(paceSecondsPerKm: number | null): string {
   const seconds = paceSecondsPerKm % 60;
   return `${minutes}:${String(seconds).padStart(2, "0")}/km`;
 }
+
+// 거리(km)를 화면 표시용으로 바꿉니다. 소수 둘째 자리까지만 보여 주고(불필요한 0은 붙이지 않음), 데이터는 바꾸지 않습니다
+// 외부 앱에서 가져온 10.123456789 같은 긴 값이 카드 칸을 넘치지 않게 합니다
+export function formatDistanceLabel(distanceKm: number): string {
+  return `${Number(distanceKm.toFixed(2))} km`;
+}

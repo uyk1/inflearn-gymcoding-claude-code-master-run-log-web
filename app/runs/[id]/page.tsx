@@ -4,7 +4,7 @@ import { ErrorMessage } from "@/components/common/error-message";
 import { buttonVariants } from "@/components/ui/button";
 import { createRunRecordService } from "@/lib/notion/container";
 import { AppError } from "@/lib/errors";
-import { formatPaceLabel } from "@/lib/notion/duration";
+import { formatDistanceLabel, formatPaceLabel } from "@/lib/notion/duration";
 import { formatKoreanDate } from "@/lib/runs/date";
 import { FOCUS_RING } from "@/lib/focus-ring";
 import { cn } from "@/lib/utils";
@@ -59,7 +59,7 @@ export default async function RunDetailPage({
 
   const fields: { label: string; value: string }[] = [
     { label: "날짜", value: formatKoreanDate(record.date) },
-    { label: "거리", value: `${record.distanceKm} km` },
+    { label: "거리", value: formatDistanceLabel(record.distanceKm) },
     { label: "소요 시간", value: record.durationText },
     { label: "평균 페이스", value: formatPaceLabel(record.paceSecondsPerKm) },
     { label: "장소", value: valueOrDash(record.place) },
@@ -90,7 +90,8 @@ export default async function RunDetailPage({
         href={record.notionUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className={buttonVariants({ variant: "outline" })}
+        // cn(twMerge)은 buttonVariants의 border-transparent와 outline의 border-border 충돌을 정리합니다. 지우면 라이트 모드 테두리가 사라집니다
+        className={cn(buttonVariants({ variant: "outline" }))}
       >
         노션에서 원본 보기
       </a>

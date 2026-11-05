@@ -6,6 +6,7 @@ import { ExcludedNoticeSummary } from "@/components/runs/excluded-notice";
 import { RunCard } from "@/components/runs/run-card";
 import { loadRunRecords } from "@/lib/runs/load";
 import { getPeriodRange, getTodayInKorea, isInRange } from "@/lib/runs/date";
+import { cn } from "@/lib/utils";
 
 // 노션 데이터를 60초마다 다시 가져옵니다 (PRD 8장: API 호출 수 줄이기)
 export const revalidate = 60;
@@ -38,7 +39,8 @@ export default async function HomePage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-xl font-semibold">최근 기록</h2>
-          <Link href="/runs" className={buttonVariants({ variant: "outline", size: "sm" })}>
+          {/* cn(twMerge)은 buttonVariants의 border-transparent와 outline의 border-border 충돌을 정리합니다. 지우면 라이트 모드 테두리가 사라집니다 */}
+          <Link href="/runs" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
             전체 보기
           </Link>
         </div>
