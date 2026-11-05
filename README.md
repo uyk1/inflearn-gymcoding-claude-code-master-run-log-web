@@ -13,7 +13,7 @@
 | 통계 | `/stats` | 주간(8주)·월간(6개월) 거리와 평균 페이스 추이 차트 |
 | PWA 설치 | 전체 | 안드로이드는 설치 버튼, 아이폰은 "공유 → 홈 화면에 추가" 안내 |
 
-기능 명세와 노션 데이터베이스 구조는 [docs/PRD.md](docs/PRD.md), 현재 로드맵(고도화, v2)은 [docs/ROADMAP.md](docs/ROADMAP.md), 완료된 MVP 로드맵(v1)은 [docs/roadmaps/ROADMAP-v1.md](docs/roadmaps/ROADMAP-v1.md)에 있습니다.
+기능 명세와 노션 데이터베이스 구조는 [docs/PRD.md](docs/PRD.md)(v1 PRD는 [docs/prds/PRD-v1.md](docs/prds/PRD-v1.md)), 현재 로드맵(고도화, v2)은 [docs/ROADMAP.md](docs/ROADMAP.md), 완료된 MVP 로드맵(v1)은 [docs/roadmaps/ROADMAP-v1.md](docs/roadmaps/ROADMAP-v1.md)에 있습니다.
 
 ## 기술 스택
 
