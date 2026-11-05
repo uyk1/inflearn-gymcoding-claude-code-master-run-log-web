@@ -20,7 +20,10 @@ export class RunRecordService {
       return { records, excluded };
     } catch (error) {
       // 노션 호출 실패는 내부 상세를 숨기고 일관된 에러로 바꿉니다
-      console.error("[notion] 러닝 기록 조회 실패", error);
+      // 에러 객체 전체에는 요청·응답 헤더가 들어 있을 수 있어, 원인 파악에 필요한 값만 남깁니다
+      const { name, message, stack } = error instanceof Error ? error : new Error(String(error));
+      const { code, status } = error as { code?: unknown; status?: unknown };
+      console.error("[notion] 러닝 기록 조회 실패", { name, code, status, message, stack });
       throw new AppError("NOTION_REQUEST_FAILED", "노션에서 러닝 기록을 가져오지 못했습니다.", 502);
     }
   }
