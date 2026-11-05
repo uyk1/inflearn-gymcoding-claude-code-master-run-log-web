@@ -66,7 +66,7 @@ Notion data source
 - `NOTION_DATA_SOURCE_ID`는 DB ID가 아니라 data source ID입니다. SDK 기본 Notion 버전은 `2025-09-03`입니다.
 - 에러: 서비스 계층은 `lib/errors.ts`의 `AppError`(code, status)를 던집니다. API 응답 형식은 `lib/api/response.ts`의 `apiSuccess`/`apiFailure`를 씁니다. 라우트 핸들러를 새로 만들면 이 형식을 쓰세요.
 - 기간 필터와 날짜 계산은 `lib/runs/date.ts`입니다. 기준은 한국 시간이고, 주는 월요일에 시작하며, 날짜는 "YYYY-MM-DD" 문자열끼리 비교합니다. 노션 날짜에 시간이 포함돼 있어도 `lib/notion/date.ts`(mapper가 사용)가 한국 시간 기준 "YYYY-MM-DD"로 바꿔 주므로 화면과 통계는 항상 이 형식만 받습니다.
-- 노션 호출을 줄이는 방식: 홈과 상세(`/runs/[id]`)는 `export const revalidate = 60`(ISR, 상세는 `generateStaticParams`가 빈 배열), 목록(`/runs`)은 동적 페이지이고 노션 조회만 `lib/runs/load.ts`의 `unstable_cache`로 60초 캐시합니다. 노션에서 바꾼 내용은 접속이 꾸준할 때 목록과 상세는 최대 약 1분, 홈은 최대 약 2분(ISR 60초 + 목록 캐시 60초) 뒤에 반영됩니다. 상세는 목록 캐시를 거치지 않고 직접 조회합니다. 한동안 접속이 없었다면 첫 접속에는 이전 내용이 보일 수 있어 새로고침이 필요할 수 있습니다. 테스트할 때만 `.env.local`의 `RUN_RECORDS_REVALIDATE_SECONDS`로 목록 캐시를 줄일 수 있고(홈과 상세의 ISR은 그대로), 운영에는 설정하지 않습니다.
+- 노션 호출을 줄이는 방식: 홈과 상세(`/runs/[id]`)는 `export const revalidate = 60`(ISR, 상세는 `generateStaticParams`가 빈 배열), 목록(`/runs`)은 동적 페이지이고 노션 조회만 `lib/runs/load.ts`의 `unstable_cache`로 60초 캐시합니다. 노션에서 바꾼 내용은 접속이 꾸준할 때 목록과 상세는 최대 약 1분, 홈은 최대 약 2분(ISR 60초 + 목록 캐시 60초) 뒤에 반영됩니다. 상세는 목록 캐시를 거치지 않고 직접 조회합니다. 한동안 접속이 없었다면 첫 접속에는 이전 내용이 보일 수 있어 새로고침이 필요할 수 있습니다. 테스트할 때만 `.env.local`의 `RUN_RECORDS_REVALIDATE_SECONDS`로 목록 캐시를 줄일 수 있고(홈은 같은 조회 캐시를 읽어 ISR 주기도 그 값으로 함께 짧아지고, 상세는 영향이 없습니다), 운영에는 설정하지 않습니다.
 - 기록 화면의 컴포넌트는 `components/runs/`에 있습니다. 제외된 기록 안내(`excluded-notice.tsx`)는 `loadRunRecords()`가 돌려주는 `excluded`를 씁니다.
 
 ## 프로젝트 컨텍스트
