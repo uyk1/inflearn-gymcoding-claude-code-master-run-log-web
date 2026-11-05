@@ -1,5 +1,7 @@
 # PRD: Run Log
 
+> v1(MVP) PRD입니다. 2026-11-05 MVP 완료로 이 폴더에 보관합니다. 현재 PRD는 [../PRD.md](../PRD.md)입니다.
+
 ## 1. 프로젝트 개요
 
 - **프로젝트명**: Run Log
