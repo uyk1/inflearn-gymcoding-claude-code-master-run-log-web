@@ -85,7 +85,7 @@
 - **shadcn/base-ui**: `asChild`를 쓰지 않습니다. `render` prop 계열 API를 씁니다.
 - **shadcn 컴포넌트 추가**: `npx shadcn@latest add <name>`만 씁니다. 파일을 직접 만들어 `components/ui/`에 넣지 않습니다.
 - **@notionhq/client**: `dataSources.query`와 `dataSources.retrieve`를 씁니다. 신규 코드에서 `databases.query`를 쓰지 않습니다. 기본 Notion 버전은 SDK가 정하는 `2025-09-03`을 그대로 씁니다.
-- **recharts**: 아직 설치되어 있지 않습니다. PRD 4단계(통계)에서만 설치합니다.
+- **recharts**: 3.8.0이 설치되어 있고(shadcn `chart`가 검증한 버전, `react-is`는 19.1.0으로 맞춤) `components/ui/chart.tsx`는 수정하지 않습니다. recharts를 import하는 파일에는 `"use client"`가 필요하고, 축 글자 색은 `tick={{ fill: "var(--muted-foreground)" }}`로 직접 줍니다(`chart.tsx`의 선택자가 recharts 3.x 구조와 맞지 않음). `shadcn add chart`는 `cn`이라는 별개 패키지를 설치하는 문제가 있어 이미 추가된 파일을 쓰고 다시 실행하지 않습니다.
 - **PRD 기술 스택에 없는 패키지는 설치하지 않습니다.** 설치가 필요하면 먼저 사용자에게 묻습니다.
 - 패키지 설치와 제거는 `npm` 명령으로만 합니다. `package-lock.json`을 직접 편집하지 않습니다.
 
@@ -122,7 +122,8 @@ Notion data source
 | DTO 필드 추가 | `lib/notion/dto.ts`, `lib/notion/mapper.ts`, `app/runs/[id]/page.tsx`의 `fields`, 필요 시 `components/runs/run-card.tsx` |
 | 기간 종류 추가 | `lib/runs/date.ts`, `components/runs/period-tabs.tsx`, `app/runs/page.tsx` |
 | 페이스 또는 시간 표시 방식 변경 | `lib/notion/duration.ts`, 관련 DTO 필드 주석, `docs/PRD.md` 4장 계산 규칙 |
-| 새 화면 추가 | 해당 `app/**/page.tsx`(`revalidate`), `components/layout/header.tsx`(메뉴가 필요한 경우) |
+| 새 화면 추가 | 해당 `app/**/page.tsx`(`revalidate`, `searchParams`를 쓰면 동적이라 효과 없음), `components/layout/header.tsx`(메뉴가 필요한 경우) |
+| 통계 기간 단위나 기간 수 변경 | `lib/runs/stats.ts`, `app/stats/page.tsx`(`PERIOD_COUNT`), `components/stats/`(X축 라벨은 `format.ts`) |
 | 구조 변경 | `CLAUDE.md` "구조 (큰 그림)", 이 문서 2장 |
 | 환경 변수 추가 | `.env.example`(사용자가 `.env.local`에 값을 넣음), `lib/notion/container.ts` 또는 `client.ts`, `docs/PRD.md` 3장 |
 | MCP 서버 추가 | `.mcp.json`의 최상위 `mcpServers` 아래에만 추가합니다 |
