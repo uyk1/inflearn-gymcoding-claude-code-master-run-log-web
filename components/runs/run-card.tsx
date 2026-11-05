@@ -3,13 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { RunRecordDto } from "@/lib/notion/dto";
 import { formatPaceLabel } from "@/lib/notion/duration";
 import { formatKoreanDate } from "@/lib/runs/date";
+import { FOCUS_RING } from "@/lib/focus-ring";
+import { cn } from "@/lib/utils";
 
 // 기록 한 건을 카드로 보여 줍니다. 누르면 상세 화면으로 이동합니다
 export function RunCard({ record }: { record: RunRecordDto }) {
   return (
     <Link
       href={`/runs/${record.id}`}
-      className="focus-visible:ring-ring focus-visible:ring-offset-background block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+      className={cn(FOCUS_RING, "block rounded-xl")}
     >
       <Card className="hover:bg-muted-foreground/10 transition-colors">
         <CardHeader>

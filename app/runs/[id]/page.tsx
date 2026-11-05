@@ -6,6 +6,8 @@ import { createRunRecordService } from "@/lib/notion/container";
 import { AppError } from "@/lib/errors";
 import { formatPaceLabel } from "@/lib/notion/duration";
 import { formatKoreanDate } from "@/lib/runs/date";
+import { FOCUS_RING } from "@/lib/focus-ring";
+import { cn } from "@/lib/utils";
 
 // 노션 데이터를 60초마다 다시 가져옵니다
 export const revalidate = 60;
@@ -20,7 +22,7 @@ function BackLink() {
   return (
     <Link
       href="/runs"
-      className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-block focus-visible:ring-offset-background rounded-sm text-sm outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+      className={cn(FOCUS_RING, "text-muted-foreground hover:text-foreground inline-block rounded-sm text-sm")}
     >
       ← 러닝 기록
     </Link>
