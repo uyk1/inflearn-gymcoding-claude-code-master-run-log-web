@@ -2,6 +2,7 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/common/empty-state";
 import { ErrorMessage } from "@/components/common/error-message";
+import { ExcludedNoticeSummary } from "@/components/runs/excluded-notice";
 import { RunCard } from "@/components/runs/run-card";
 import { loadRunRecords } from "@/lib/runs/load";
 import { getPeriodRange, getTodayInKorea, isInRange } from "@/lib/runs/date";
@@ -12,7 +13,7 @@ export const revalidate = 60;
 const RECENT_COUNT = 3;
 
 export default async function HomePage() {
-  const { records, errorMessage } = await loadRunRecords();
+  const { records, excluded, errorMessage } = await loadRunRecords();
 
   const today = getTodayInKorea();
   const weekRange = getPeriodRange("week", today);
@@ -31,6 +32,7 @@ export default async function HomePage() {
           </p>
           <p className="text-muted-foreground mt-2 text-sm">이번 주 기록 {weekRecords.length}건</p>
         </div>
+        <ExcludedNoticeSummary count={excluded.length} />
       </section>
 
       <section className="space-y-4">

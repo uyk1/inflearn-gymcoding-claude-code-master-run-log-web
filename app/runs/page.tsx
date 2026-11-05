@@ -1,5 +1,6 @@
 import { EmptyState } from "@/components/common/empty-state";
 import { ErrorMessage } from "@/components/common/error-message";
+import { ExcludedNotice } from "@/components/runs/excluded-notice";
 import { PeriodTabs } from "@/components/runs/period-tabs";
 import { RunCard } from "@/components/runs/run-card";
 import { loadRunRecords } from "@/lib/runs/load";
@@ -16,7 +17,7 @@ export default async function RunsPage({
   const { period: periodParam } = await searchParams;
   const period = parsePeriod(periodParam);
 
-  const { records, errorMessage } = await loadRunRecords();
+  const { records, excluded, errorMessage } = await loadRunRecords();
   const range = getPeriodRange(period, getTodayInKorea());
   const filtered = records.filter((record) => isInRange(record.date, range));
 
@@ -26,6 +27,8 @@ export default async function RunsPage({
         <h1 className="text-2xl font-bold tracking-tight">러닝 기록</h1>
         <PeriodTabs current={period} />
       </div>
+
+      <ExcludedNotice items={excluded} />
 
       {errorMessage ? (
         <ErrorMessage message={errorMessage} />
