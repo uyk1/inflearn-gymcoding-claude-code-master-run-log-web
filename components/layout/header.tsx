@@ -23,6 +23,12 @@ export function Header() {
             >
               기록
             </Link>
+            <Link
+              href="/stats"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              통계
+            </Link>
           </nav>
         </div>
         <ThemeToggle />
