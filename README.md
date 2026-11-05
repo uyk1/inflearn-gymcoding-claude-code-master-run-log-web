@@ -140,11 +140,21 @@ docs/                  # PRD, ROADMAP
 `next-themes`의 `ThemeProvider`가 `app/layout.tsx`에서 `class` 속성으로 동작합니다.
 헤더의 토글 버튼으로 라이트/다크를 전환하며, 기본값은 OS 설정을 따릅니다.
 
+## 배포
+
+- 플랫폼: Vercel. GitHub 저장소를 가져오면 Next.js로 자동 인식되며 빌드 설정은 기본값을 씁니다.
+- 배포 주소: [https://pjt-run-log.vercel.app](https://pjt-run-log.vercel.app)
+- Vercel 프로젝트 환경 변수에 `NOTION_API_KEY`와 `NOTION_DATA_SOURCE_ID`를 등록합니다. 두 값은 접두사 없이 서버 전용으로 쓰고, 저장소에는 기록하지 않습니다.
+- 배포용 노션 키는 개발용과 분리해 읽기 전용 권한으로 만드는 것을 권장합니다. 앱은 노션을 읽기만 합니다.
+- 운영에는 `RUN_RECORDS_REVALIDATE_SECONDS`를 설정하지 않습니다(테스트 전용).
+- 모든 응답에 보안 헤더(`nosniff`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`)가 붙고 `X-Powered-By`는 숨깁니다(`next.config.ts`).
+
 ## PWA
 
 - `app/manifest.ts`가 이름, `display: "standalone"`, 아이콘을 정의하고, `apple-touch-icon`은 `app/layout.tsx`의 metadata로 연결합니다.
 - service worker는 포함하지 않으므로 오프라인 캐시와 푸시 알림은 지원하지 않습니다.
-- 설치는 HTTPS로 배포한 주소에서 확인합니다. 배포 URL은 배포 후 이 문서에 추가합니다.
+- 설치는 HTTPS 주소에서만 됩니다. 배포 주소 [https://pjt-run-log.vercel.app](https://pjt-run-log.vercel.app)에서 아이폰 Safari의 홈 화면 추가와 독립 창 실행을 확인했습니다.
+- 갤럭시(Chrome, Samsung Internet)에서의 설치는 확인하지 않았습니다. 안드로이드의 "앱 설치" 버튼 동작은 실기기 확인이 필요합니다.
 
 ## 새 shadcn/ui 컴포넌트 추가
 
