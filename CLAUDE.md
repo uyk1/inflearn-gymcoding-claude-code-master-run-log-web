@@ -75,4 +75,5 @@ Notion data source
 ## 프로젝트 컨텍스트
 
 - PRD 문서: @docs/PRD.md
-- 개발 로드맵: @docs/ROADMAP.md
+- 고도화 로드맵(v2, 현재): @docs/ROADMAP.md
+- MVP 로드맵(v1, 완료·보관): docs/roadmaps/ROADMAP-v1.md (자동으로 불러오지 않습니다)
