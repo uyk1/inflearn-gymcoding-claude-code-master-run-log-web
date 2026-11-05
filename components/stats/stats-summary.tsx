@@ -27,6 +27,12 @@ export function StatsSummary({ title, stats }: { title: string; stats: PeriodSta
           ))}
         </dl>
         <p className="text-muted-foreground text-xs">집계된 기록 {stats.runCount}건</p>
+        {/* 기록은 있는데 페이스가 비어 있으면 허용 범위를 벗어나 숨긴 것이므로 이유를 알려 줍니다 */}
+        {stats.runCount > 0 && stats.avgPaceSecondsPerKm === null ? (
+          <p className="text-muted-foreground text-xs">
+            평균 페이스가 허용 범위를 벗어나 표시하지 않습니다. 거리와 시간을 확인해 주세요.
+          </p>
+        ) : null}
       </CardContent>
     </Card>
   );
