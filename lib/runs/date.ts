@@ -22,7 +22,22 @@ function toDateString(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+// "YYYY-MM-DD"에 일수를 더합니다. 음수도 됩니다 (days는 정수여야 합니다)
+export function addDays(date: string, days: number): string {
+  const base = parseDate(date);
+  base.setUTCDate(base.getUTCDate() + days);
+  return toDateString(base);
+}
+
+// 날짜가 속한 달의 첫날에 개월 수를 더해 그 달의 첫날을 구합니다. 음수도 됩니다 (months는 정수여야 하고, 인자가 1일이 아니어도 그 달의 1일로 맞춥니다)
+export function addMonths(monthStart: string, months: number): string {
+  const base = parseDate(monthStart);
+  return toDateString(new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + months, 1)));
+}
+
 // 이번 주(월요일 시작)나 이번 달의 시작과 끝을 구합니다. 전체 기간이면 null을 반환합니다
+export function getPeriodRange(period: "week" | "month", today: string): DateRange;
+export function getPeriodRange(period: RunPeriod, today: string): DateRange | null;
 export function getPeriodRange(period: RunPeriod, today: string): DateRange | null {
   if (period === "all") return null;
 
