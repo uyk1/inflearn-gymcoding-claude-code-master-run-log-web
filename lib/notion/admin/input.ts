@@ -68,20 +68,40 @@ export type RunInputDto = z.output<typeof runInputSchema>;
 // 아직 검증되지 않은 입력의 형태(폼이 보내는 값)
 export type RunInputRaw = z.input<typeof runInputSchema>;
 
-export type RunInputResult =
-  | { success: true; data: RunInputDto }
+// 수정 입력: 생성 입력에서 clientKey만 뺀 것입니다. 출처와 외부ID는 수정할 수 없습니다(스키마가 알 수 없는 항목으로 거부)
+export const runUpdateSchema = runInputSchema.omit({ clientKey: true });
+export type RunUpdateDto = z.output<typeof runUpdateSchema>;
+
+export type ParseResult<T> =
+  | { success: true; data: T }
   // 필드 이름 → 첫 번째 오류 문구. 스키마에 없는 항목은 "_form" 키로 담습니다
   | { success: false; fieldErrors: Record<string, string> };
 
-// 입력을 검증합니다. 실패하면 필드별 오류 문구만 돌려주고 입력값은 담지 않습니다
-export function parseRunInput(raw: unknown): RunInputResult {
-  const result = runInputSchema.safeParse(raw);
-  if (result.success) return { success: true, data: result.data };
+export type RunInputResult = ParseResult<RunInputDto>;
 
+// 검증 오류를 필드별 문구로 정리합니다. 입력값은 담지 않습니다
+function toFieldErrors(error: z.ZodError): Record<string, string> {
   const fieldErrors: Record<string, string> = {};
-  for (const issue of result.error.issues) {
+  for (const issue of error.issues) {
     const key = issue.code === "unrecognized_keys" || issue.path.length === 0 ? "_form" : String(issue.path[0]);
     fieldErrors[key] ??= issue.code === "unrecognized_keys" ? "허용되지 않는 항목이 포함되어 있습니다." : issue.message;
   }
-  return { success: false, fieldErrors };
+  return fieldErrors;
+}
+
+// 생성 입력을 검증합니다. 실패하면 필드별 오류 문구만 돌려주고 입력값은 담지 않습니다
+export function parseRunInput(raw: unknown): RunInputResult {
+  const result = runInputSchema.safeParse(raw);
+  return result.success ? { success: true, data: result.data } : { success: false, fieldErrors: toFieldErrors(result.error) };
+}
+
+// 수정 입력을 검증합니다(clientKey 없음)
+export function parseRunUpdate(raw: unknown): ParseResult<RunUpdateDto> {
+  const result = runUpdateSchema.safeParse(raw);
+  return result.success ? { success: true, data: result.data } : { success: false, fieldErrors: toFieldErrors(result.error) };
+}
+
+// 노션 페이지 id 형식(UUID)인지 확인합니다. 형식이 틀린 id로는 노션을 호출하지 않습니다
+export function isPageId(value: unknown): value is string {
+  return z.uuid().safeParse(value).success;
 }
