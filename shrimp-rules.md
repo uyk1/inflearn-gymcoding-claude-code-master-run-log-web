@@ -18,7 +18,7 @@
 | `lib/notion/dto.ts` | `RunRecordDto`, `ExcludedRunDto`, `RunRecordListDto` | 화면과 API가 쓰는 형태만 둡니다 |
 | `lib/notion/mapper.ts` | 노션 페이지 → DTO | 필수값 검사와 제외 로그, 제외 행 정보(`ExcludedRunDto`)는 여기서 만듭니다 |
 | `lib/notion/repository.ts` | dataSources.query 호출과 커서 순회 | 응답 변환을 하지 않습니다 |
-| `lib/notion/service.ts` | `listRunRecords`, `findRunRecord` | 노션 실패는 `AppError`로 바꿉니다 |
+| `lib/notion/service.ts` | `listRunRecords` | 노션 실패는 `AppError`로 바꿉니다 |
 | `lib/notion/container.ts` | 환경 변수를 읽어 서비스 조립 | 의존성 조립은 여기서만 합니다 |
 | `lib/notion/client.ts` | 노션 클라이언트 생성 | 서버 전용입니다 |
 | `lib/runs/load.ts` | 화면용 로더 | 노션 실패를 `errorMessage`로 돌려줍니다 |
@@ -62,7 +62,7 @@
 
 ### 4-3. 새 화면(페이지)을 추가할 때
 
-1. 노션 데이터가 필요하면 `loadRunRecords()`(목록) 또는 `createRunRecordService().findRunRecord(id)`(단건)를 씁니다.
+1. 노션 데이터가 필요하면 `loadRunRecords()`(목록) 또는 `loadRunRecord(id)`(단건)를 씁니다.
 2. 노션 호출이 있는 페이지 파일 맨 위에 `export const revalidate = 60;`을 둡니다. `searchParams`를 쓰는 동적 페이지는 페이지 캐시가 안 되므로, `loadRunRecords()`(내부 `unstable_cache` 60초)로 노션 호출을 줄입니다. 동적 세그먼트(`[id]`)는 `generateStaticParams`가 빈 배열을 반환해야 ISR이 됩니다.
 3. 화면 이동 링크가 필요하면 `components/layout/header.tsx`의 `nav`에 추가합니다.
 4. 기록 전용 컴포넌트는 `components/runs/`에 둡니다.
@@ -95,7 +95,7 @@
 Notion data source
   → repository (dataSources.query, 커서 순회)
   → mapper (페이지 → RunRecordDto 또는 ExcludedRunDto, 실패 행은 제외하고 사유와 함께 console.warn)
-  → service (listRunRecords({ records, excluded }) / findRunRecord, 노션 실패 → AppError 502)
+  → service (listRunRecords({ records, excluded }), 노션 실패 → AppError 502)
   → container (환경 변수 → 서비스 조립)
   → lib/runs/load.ts (화면용, 조회만 unstable_cache 60초, errorMessage 반환)
   → app/ 서버 컴포넌트 (직접 호출, 홈·상세는 revalidate = 60)

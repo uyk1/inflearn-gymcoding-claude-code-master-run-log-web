@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { createRunRecordService } from "@/lib/notion/container";
-import type { RunRecordListDto } from "@/lib/notion/dto";
+import type { RunRecordDto, RunRecordListDto } from "@/lib/notion/dto";
 import { AppError } from "@/lib/errors";
 
 const DEFAULT_REVALIDATE_SECONDS = 60;
@@ -44,4 +44,15 @@ export async function loadRunRecords(): Promise<
     }
     throw error;
   }
+}
+
+// 상세 화면용 단건 조회입니다. 목록과 같은 공유 캐시에서 찾으므로 존재하지 않는 id를 요청해도 노션 호출이 늘지 않습니다.
+// 노션 실패는 errorMessage로 돌려주고, 기록이 없으면 record가 null입니다
+export async function loadRunRecord(id: string): Promise<{
+  record: RunRecordDto | null;
+  errorMessage: string | null;
+}> {
+  const { records, errorMessage } = await loadRunRecords();
+  if (errorMessage) return { record: null, errorMessage };
+  return { record: records.find((item) => item.id === id) ?? null, errorMessage: null };
 }
