@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
+import { MIN_SESSION_SECRET_LENGTH, SESSION_COOKIE_NAME } from "@/lib/auth/constants";
 import { verifySessionToken } from "@/lib/auth/token";
 
 // /admin 이하의 1차 차단입니다. 세션 쿠키가 없거나 유효하지 않으면 로그인 화면으로 보냅니다.
@@ -13,8 +13,9 @@ export async function middleware(request: NextRequest) {
   if (pathname === "/admin/login") return NextResponse.next();
 
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  // 비밀값이 없으면 verifySessionToken이 false를 돌려주므로 설정이 빠져도 열리지 않습니다(닫힌 쪽으로 실패)
-  const valid = await verifySessionToken(process.env.ADMIN_SESSION_SECRET ?? "", token, Date.now());
+  // 비밀값이 없거나 너무 짧으면 열리지 않습니다(닫힌 쪽으로 실패)
+  const secret = process.env.ADMIN_SESSION_SECRET ?? "";
+  const valid = secret.length >= MIN_SESSION_SECRET_LENGTH && (await verifySessionToken(secret, token, Date.now()));
   if (valid) return NextResponse.next();
 
   return NextResponse.redirect(new URL("/admin/login", request.url));
