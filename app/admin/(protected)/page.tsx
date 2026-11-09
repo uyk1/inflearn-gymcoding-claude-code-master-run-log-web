@@ -1,23 +1,17 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
 import { LogoutButton } from "@/components/admin/logout-button";
-import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
-import { isValidSessionToken } from "@/lib/auth/session";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 export const metadata: Metadata = {
   title: "관리자 | Run Log",
   robots: { index: false, follow: false },
 };
 
-// 관리자 홈(임시): 로그인 여부와 로그아웃을 확인하기 위한 최소 화면입니다.
-// 세션 확인은 V2-P1-3에서 미들웨어와 레이아웃으로 옮겨 /admin 전체를 보호합니다
+// 관리자 홈: 로그인과 보호를 확인하는 최소 화면입니다. 기록 입력·수정은 이후 단계에서 추가합니다
 export default async function AdminHomePage() {
-  const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
-  if (!(await isValidSessionToken(token))) {
-    redirect("/admin/login");
-  }
+  // 레이아웃과 별개로 페이지에서도 확인합니다(레이아웃은 클라이언트 이동 때 다시 실행되지 않을 수 있음)
+  await requireAdmin();
 
   return (
     <div className="space-y-6 py-6">
