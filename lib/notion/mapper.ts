@@ -1,40 +1,10 @@
 import type { PageObjectResponse } from "@notionhq/client";
-import { RUN_PROPERTY } from "@/lib/notion/properties";
-import { normalizeNotionDate } from "@/lib/notion/date";
-import { calcPaceSecondsPerKm, formatDuration, parseDurationToSeconds } from "@/lib/notion/duration";
-import type { ExcludedReason, ExcludedRunDto, RunRecordDto } from "@/lib/notion/dto";
-
-type NotionProperty = PageObjectResponse["properties"][string];
-
-function readTitle(property: NotionProperty | undefined): string {
-  if (property?.type !== "title") return "";
-  return property.title.map((text) => text.plain_text).join("");
-}
-
-function readRichText(property: NotionProperty | undefined): string {
-  if (property?.type !== "rich_text") return "";
-  return property.rich_text.map((text) => text.plain_text).join("");
-}
-
-function readNumber(property: NotionProperty | undefined): number | null {
-  if (property?.type !== "number") return null;
-  return property.number;
-}
-
-function readDate(property: NotionProperty | undefined): string | null {
-  if (property?.type !== "date") return null;
-  return property.date?.start ?? null;
-}
-
-function readSelect(property: NotionProperty | undefined): string | null {
-  if (property?.type !== "select") return null;
-  return property.select?.name ?? null;
-}
-
-function readMultiSelect(property: NotionProperty | undefined): string[] {
-  if (property?.type !== "multi_select") return [];
-  return property.multi_select.map((option) => option.name);
-}
+// 테스트(node --test)에서 실행할 수 있도록 별칭(@/) 대신 확장자 있는 상대 경로로 import합니다
+import { RUN_PROPERTY } from "./properties.ts";
+import { normalizeNotionDate } from "./date.ts";
+import { calcPaceSecondsPerKm, formatDuration, parseDurationToSeconds } from "./duration.ts";
+import type { ExcludedReason, ExcludedRunDto, RunRecordDto } from "./dto.ts";
+import { readDate, readMultiSelect, readNumber, readRichText, readSelect, readTitle } from "./readers.ts";
 
 // 노션 페이지 한 건의 변환 결과입니다. 정상 기록이거나 제외 정보 중 하나입니다
 export type RunMapResult =
