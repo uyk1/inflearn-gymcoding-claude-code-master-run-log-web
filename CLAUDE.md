@@ -55,7 +55,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Notion data source
   → lib/notion/repository.ts  dataSources.query 호출, 커서를 따라 전체 페이지 순회
   → lib/notion/mapper.ts      페이지 → RunRecordDto 또는 ExcludedRunDto, 필수값·형식 검사 (실패 행은 제외하고 사유와 함께 console.warn)
-  → lib/notion/service.ts     listRunRecords({ records, excluded }) / findRunRecord, 노션 실패는 AppError(502)로 변환
+  → lib/notion/service.ts     listRunRecords({ records, excluded }), 노션 실패는 AppError(502)로 변환
   → lib/notion/container.ts   환경 변수를 읽어 조립 (createRunRecordService)
   → lib/runs/load.ts          화면용 로더, { records, excluded, errorMessage } 반환 (노션 실패는 errorMessage로)
   → app/ 서버 컴포넌트         위 로더를 직접 호출 (현재 API 라우트는 없음)
@@ -67,7 +67,7 @@ Notion data source
 - 에러: 서비스 계층은 `lib/errors.ts`의 `AppError`(code, status)를 던집니다. API 응답 형식은 `lib/api/response.ts`의 `apiSuccess`/`apiFailure`를 씁니다. 라우트 핸들러를 새로 만들면 이 형식을 쓰세요.
 - 기간 필터와 날짜 계산은 `lib/runs/date.ts`입니다. 기준은 한국 시간이고, 주는 월요일에 시작하며, 날짜는 "YYYY-MM-DD" 문자열끼리 비교합니다. 노션 날짜에 시간이 포함돼 있어도 `lib/notion/date.ts`(mapper가 사용)가 한국 시간 기준 "YYYY-MM-DD"로 바꿔 주므로 화면과 통계는 항상 이 형식만 받습니다.
 - 기간별 통계(주간·월간 총 거리, 총 시간, 평균 페이스)는 `lib/runs/stats.ts`의 `buildPeriodStats`입니다. 노션을 다시 부르지 않고 `loadRunRecords()`의 기록을 입력으로 받으며, 평균 페이스는 기록별 페이스의 평균이 아니라 기간 총 시간 ÷ 총 거리입니다. 거리 0 이하 기록은 합계에서 제외하고, 통계 화면은 평균 페이스가 1:00~30:00/km 범위(`PLAUSIBLE_PACE_RANGE`)를 벗어난 기간의 페이스만 표시하지 않습니다(입력 실수 방어, 거리와 시간 합계는 그대로이고 요약 카드에 이유를 안내합니다). 이 범위는 극단값만 걸러내며, 범위 안에 드는 오타(예: 5km를 0.5km로 입력)는 걸러내지 못합니다. 오늘 이후 날짜의 기록은 오늘이 속한 기간 안이면 합산합니다(이번 달 안의 미래 날짜는 월간에 들어가고, 이번 주를 벗어난 날짜는 주간에서 빠집니다). 운동을 미리 적어 둘 수 있도록 의도한 동작입니다.
-- 노션 호출을 줄이는 방식: 홈과 상세(`/runs/[id]`)는 `export const revalidate = 60`(ISR, 상세는 `generateStaticParams`가 빈 배열), 목록(`/runs`)은 동적 페이지이고 노션 조회만 `lib/runs/load.ts`의 `unstable_cache`로 60초 캐시합니다. 노션에서 바꾼 내용은 접속이 꾸준할 때 목록과 상세는 최대 약 1분, 홈은 최대 약 2분(ISR 60초 + 목록 캐시 60초) 뒤에 반영됩니다. 상세는 목록 캐시를 거치지 않고 직접 조회합니다. 한동안 접속이 없었다면 첫 접속에는 이전 내용이 보일 수 있어 새로고침이 필요할 수 있습니다. 테스트할 때만 `.env.local`의 `RUN_RECORDS_REVALIDATE_SECONDS`로 목록 캐시를 줄일 수 있고(홈은 같은 조회 캐시를 읽어 ISR 주기도 그 값으로 함께 짧아지고, 상세는 영향이 없습니다), 운영에는 설정하지 않습니다.
+- 노션 호출을 줄이는 방식: 홈과 상세(`/runs/[id]`)는 `export const revalidate = 60`(ISR, 상세는 `generateStaticParams`가 빈 배열), 목록(`/runs`)은 동적 페이지이고 노션 조회만 `lib/runs/load.ts`의 `unstable_cache`로 60초 캐시합니다. 노션에서 바꾼 내용은 접속이 꾸준할 때 목록은 최대 약 1분, 홈과 상세는 최대 약 2분(ISR 60초 + 목록 캐시 60초) 뒤에 반영됩니다. 상세도 같은 캐시를 `loadRunRecord(id)`로 읽습니다(존재하지 않는 id를 요청해도 노션 호출이 늘지 않음). 한동안 접속이 없었다면 첫 접속에는 이전 내용이 보일 수 있어 새로고침이 필요할 수 있습니다. 테스트할 때만 `.env.local`의 `RUN_RECORDS_REVALIDATE_SECONDS`로 목록 캐시를 줄일 수 있고(홈과 상세는 같은 조회 캐시를 읽어 ISR 주기도 그 값으로 함께 짧아집니다), 운영에는 설정하지 않습니다.
 - 기록 화면의 컴포넌트는 `components/runs/`에 있습니다. 제외된 기록 안내(`excluded-notice.tsx`)는 `loadRunRecords()`가 돌려주는 `excluded`를 씁니다.
 - 통계 화면은 `app/stats/page.tsx`(`?view=week|month`, 주간 8주·월간 6개월)이고 컴포넌트는 `components/stats/`에 있습니다. `/runs`처럼 `searchParams`를 쓰는 동적 페이지라 `revalidate`는 효과가 없고 노션 조회만 60초 캐시됩니다. 차트 두 개(`distance-chart.tsx`, `pace-chart.tsx`)만 `"use client"`이고 recharts는 이 두 파일에서만 import합니다.
 - 차트(recharts 3.8 + shadcn `chart`)를 만들 때: `components/ui/chart.tsx`는 수정하지 않습니다. 이 조합에서는 축 글자 색이 적용되지 않아 `XAxis`/`YAxis`에 `tick={{ fill: "var(--muted-foreground)" }}`를 직접 줍니다. 색은 `--chart-N` 토큰만 쓰고(앱은 무채색이며 다크에서 `--chart-3`은 대비가 부족해 선 색에 `--muted-foreground`를 씁니다), `ChartContainer`에는 반드시 높이를 줍니다.

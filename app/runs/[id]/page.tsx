@@ -2,8 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ErrorMessage } from "@/components/common/error-message";
 import { buttonVariants } from "@/components/ui/button";
-import { createRunRecordService } from "@/lib/notion/container";
-import { AppError } from "@/lib/errors";
+import { loadRunRecord } from "@/lib/runs/load";
 import { formatDistanceLabel, formatPaceLabel } from "@/lib/notion/duration";
 import { formatKoreanDate } from "@/lib/runs/date";
 import { FOCUS_RING } from "@/lib/focus-ring";
@@ -41,21 +40,17 @@ export default async function RunDetailPage({
 }) {
   const { id } = await params;
 
-  let record;
-  try {
-    record = await createRunRecordService().findRunRecord(id);
-  } catch (error) {
-    if (error instanceof AppError && error.code === "NOT_FOUND") notFound();
-    if (error instanceof AppError) {
-      return (
-        <div className="mx-auto max-w-2xl space-y-3">
-          <BackLink />
-          <ErrorMessage message={error.message} />
-        </div>
-      );
-    }
-    throw error;
+  // 목록과 같은 공유 캐시에서 찾습니다. 설정 오류 등은 던져져 error.tsx가 처리합니다
+  const { record, errorMessage } = await loadRunRecord(id);
+  if (errorMessage) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-3">
+        <BackLink />
+        <ErrorMessage message={errorMessage} />
+      </div>
+    );
   }
+  if (!record) notFound();
 
   const fields: { label: string; value: string }[] = [
     { label: "날짜", value: formatKoreanDate(record.date) },
