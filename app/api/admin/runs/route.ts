@@ -1,6 +1,7 @@
 import { revalidateTag } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { isConfigErrorCode, toPublicMessage } from "@/lib/api/public-error";
 import { apiFailure, apiSuccess, type ApiFailure, type ApiSuccess } from "@/lib/api/response";
 import { isSameOrigin } from "@/lib/auth/origin";
 import { hasAdminSession } from "@/lib/auth/require-admin";
@@ -49,7 +50,9 @@ export async function POST(request: NextRequest) {
     return json(apiSuccess({ id: result.id, created: result.created }), result.created ? 201 : 200);
   } catch (error) {
     if (error instanceof AppError) {
-      return json(apiFailure(error.code, error.message), error.status);
+      // 설정 오류의 메시지에는 환경 변수 이름 같은 내부 정보가 있을 수 있어 응답에는 일반 문구만 보내고, 서버 로그에는 코드만 남깁니다
+      if (isConfigErrorCode(error.code)) console.error("[api] 관리자 쓰기 설정 오류", { code: error.code });
+      return json(apiFailure(error.code, toPublicMessage(error.code, error.message)), error.status);
     }
     // 예상하지 못한 오류는 내부 정보를 숨기고 코드만 남깁니다
     console.error("[api] 관리자 기록 생성 중 예상하지 못한 오류", { name: error instanceof Error ? error.name : "unknown" });
