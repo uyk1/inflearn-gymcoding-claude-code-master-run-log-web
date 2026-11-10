@@ -94,6 +94,28 @@ export function mapApiFailureToFieldErrors(failure: ApiFailure): RunFormErrors {
   return details && Object.keys(details).length > 0 ? toFormErrors(details) : { _form: message };
 }
 
+// 폼 내용의 서명입니다. 서버가 같은 기록으로 보는 입력(앞뒤 공백, 숫자 표기, 태그 중복)은 같은 서명이 되도록
+// 정규화합니다. 같은 clientKey로 다시 저장했을 때 "처음 보낸 내용과 달라졌는지"를 알아보는 데 씁니다
+export function payloadSignature(values: RunFormValues): string {
+  return JSON.stringify({
+    title: values.title.trim(),
+    date: values.date,
+    distanceKm: parseDistance(values.distance),
+    duration: values.duration.trim(),
+    place: values.place.trim(),
+    memo: values.memo.trim(),
+    intensity: values.intensity === "" ? null : values.intensity,
+    tags: [...new Set(parseTags(values.tags))],
+  });
+}
+
+// 이전 시도(서버에 닿았는지 알 수 없는 것들)의 서명 중 현재 내용과 다른 것이 하나라도 있으면 true입니다.
+// 서버가 "이미 저장된 기록"이라고 답했을 때, 지금 입력한 내용이 저장된 내용과 다를 수 있음을 알리는 데 씁니다.
+// 이전 시도가 없으면(다른 탭 등) 비교할 수 없으므로 false입니다
+export function isContentChanged(currentSignature: string, earlierSignatures: readonly string[]): boolean {
+  return earlierSignatures.some((signature) => signature !== currentSignature);
+}
+
 // 거리와 소요시간이 모두 유효할 때만 예상 페이스("5:00/km")를 돌려줍니다. 입력 오타를 눈으로 잡는 데 씁니다.
 // 거리가 숫자가 아니거나 0 이하이면 calcPaceSecondsPerKm이 null을 돌려주므로 따로 검사하지 않습니다
 export function previewPace(duration: string, distance: string): string | null {
