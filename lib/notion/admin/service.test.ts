@@ -175,6 +175,19 @@ test("trashRun: 다른 DB의 페이지는 지우지 않고, 형식이 틀린 id�
   assert.deepEqual(bad.fake.calls, []);
 });
 
+test("노션에 없는 페이지(object_not_found)는 502가 아니라 404이고 쓰기는 하지 않는다", async () => {
+  const notFound = Object.assign(new Error("Could not find page"), { code: "object_not_found", status: 404 });
+  for (const run of [
+    (s: AdminRunService) => s.getRunForEdit(PAGE_ID),
+    (s: AdminRunService) => s.trashRun(PAGE_ID),
+    (s: AdminRunService) => s.updateRun(PAGE_ID, updateInput(), DEFAULT_VERSION),
+  ]) {
+    const { service, fake } = setup({ failOn: { "pages.retrieve": notFound } });
+    await assert.rejects(() => run(service), (e: unknown) => e instanceof AppError && e.code === "NOT_FOUND" && e.status === 404);
+    assert.equal(fake.calls.filter((c) => c.method === "pages.update").length, 0);
+  }
+});
+
 test("update·trash의 노션 실패도 AppError(502)로 바뀌고 로그에 메시지가 없다", async () => {
   const log = captureErrors();
   const notionError = Object.assign(new Error("SECRET-NOTION-MESSAGE"), { code: "internal_server_error", status: 500 });
