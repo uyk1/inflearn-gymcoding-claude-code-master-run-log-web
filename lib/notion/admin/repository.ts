@@ -57,7 +57,14 @@ export class AdminRunRepository {
   // 관리자 키로 워크스페이스의 다른 페이지를 고치거나 지우지 못하게 하는 방어입니다. 아니면 404를 던집니다.
   // 한 번의 조회로 소속 확인과 현재 내용 읽기(버전 비교)를 함께 합니다
   async assertRunPage(pageId: string): Promise<PageObjectResponse> {
-    const page = await this.notion.pages.retrieve({ page_id: pageId });
+    const page = await this.notion.pages.retrieve({ page_id: pageId }).catch((error: unknown) => {
+      // 노션에 없는 페이지(이미 영구 삭제됐거나 이 통합에서 볼 수 없는 페이지)는 502가 아니라 404로 다룹니다
+      const { code, status } = (error ?? {}) as { code?: unknown; status?: unknown };
+      if (code === "object_not_found" || status === 404) {
+        throw new AppError("NOT_FOUND", "해당 러닝 기록을 찾을 수 없습니다.", 404);
+      }
+      throw error;
+    });
     const inDataSource =
       "parent" in page && page.parent.type === "data_source_id" && page.parent.data_source_id === this.dataSourceId;
     const inTrash = "in_trash" in page && page.in_trash === true;

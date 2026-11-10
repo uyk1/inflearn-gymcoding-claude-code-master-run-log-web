@@ -26,6 +26,9 @@ export default async function AdminHomePage() {
         <Link href="/admin/runs/new" className={cn(buttonVariants({ size: "lg" }), "w-full sm:w-auto")}>
           기록 입력
         </Link>
+        <Link href="/admin/runs" className={cn(buttonVariants({ size: "lg", variant: "outline" }), "w-full sm:w-auto")}>
+          기록 목록
+        </Link>
         <LogoutButton />
       </div>
     </div>
