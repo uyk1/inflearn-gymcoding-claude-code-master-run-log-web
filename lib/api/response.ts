@@ -9,6 +9,8 @@ export type ApiFailure = {
   error: {
     code: string;
     message: string;
+    // 필드별 검증 오류처럼 화면이 쓰는 추가 정보입니다(없으면 키 자체가 없습니다). 입력값은 담지 않습니다
+    details?: Record<string, string>;
   };
 };
 
@@ -18,6 +20,6 @@ export function apiSuccess<T>(data: T): ApiSuccess<T> {
   return { success: true, data };
 }
 
-export function apiFailure(code: string, message: string): ApiFailure {
-  return { success: false, error: { code, message } };
+export function apiFailure(code: string, message: string, details?: Record<string, string>): ApiFailure {
+  return { success: false, error: details ? { code, message, details } : { code, message } };
 }
