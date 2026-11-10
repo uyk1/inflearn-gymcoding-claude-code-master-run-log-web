@@ -10,10 +10,16 @@ import { redirect } from "next/navigation";
 import { SESSION_COOKIE_NAME } from "./constants";
 import { isValidSessionToken } from "./session";
 
+// 지금 요청에 유효한 관리자 세션이 있는지 확인합니다. 리다이렉트하지 않고 참/거짓만 돌려주므로
+// 화면 이동이 맞지 않는 API 라우트 핸들러(401 응답)에서 씁니다
+export async function hasAdminSession(): Promise<boolean> {
+  const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
+  return isValidSessionToken(token);
+}
+
 // 유효한 관리자 세션이 없으면 로그인 화면으로 보냅니다(이후 코드는 실행되지 않음)
 export async function requireAdmin(): Promise<void> {
-  const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
-  if (!(await isValidSessionToken(token))) {
+  if (!(await hasAdminSession())) {
     redirect("/admin/login");
   }
 }
