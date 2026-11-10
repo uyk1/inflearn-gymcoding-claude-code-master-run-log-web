@@ -109,10 +109,11 @@ Notion data source
 1. `npx tsc --noEmit`
 2. `npm run lint`
 3. `npm run build`
-4. 화면 확인은 `npm run dev`로 합니다.
+4. `npm test`(Node 내장 `node --test`, `lib/**/*.test.ts`)를 실행합니다.
+5. 화면 확인은 `npm run dev`로 합니다.
 - 개발 서버가 떠 있는 상태에서 `npm run build`를 실행하지 않습니다. `.next`가 충돌해 페이지가 500을 냅니다.
 - 3000 포트가 사용 중이면 개발 서버는 3001로 뜹니다. 이전 `node` 프로세스를 먼저 정리합니다.
-- 테스트 러너는 없습니다. 단일 테스트 실행 명령도 없습니다.
+- 단일 파일은 `node --test lib/notion/mapper.test.ts`처럼 경로를 지정해 실행합니다. 테스트 대상 모듈은 `@/` 별칭 대신 `.ts` 확장자가 있는 상대 경로로 import합니다.
 
 ## 7. 함께 수정해야 하는 파일 묶음
 
