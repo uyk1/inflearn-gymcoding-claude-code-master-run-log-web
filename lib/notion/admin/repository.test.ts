@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { AppError } from "../../errors.ts";
-import { createFakeNotion, DATA_SOURCE_ID } from "./fake-notion.ts";
+import { createFakeNotion, DATA_SOURCE_ID, runPage } from "./fake-notion.ts";
 import { AdminRunRepository } from "./repository.ts";
 
 const PAGE_ID = "22222222-2222-4222-8222-222222222222";
@@ -88,4 +88,27 @@ test("AppError는 code, status, name, message를 유지한다", () => {
   assert.deepEqual([error.code, error.status, error.name, error.message], ["X", 418, "AppError", "메시지"]);
   assert.equal(new AppError("Y", "m").status, 500);
   assert.ok(error instanceof Error);
+});
+
+test("assertRunPage: 통과하면 조회한 페이지(속성 포함)를 돌려준다", async () => {
+  const fake = createFakeNotion();
+  const page = await new AdminRunRepository(fake.client, DATA_SOURCE_ID).assertRunPage(PAGE_ID);
+  assert.equal(page.id, "page");
+  assert.ok("properties" in page && page.properties && "제목" in page.properties);
+  assert.deepEqual(fake.methods(), ["pages.retrieve"]);
+});
+
+test("updatePage: 노션이 돌려준 갱신된 페이지를 그대로 돌려준다", async () => {
+  const fake = createFakeNotion({ updated: runPage({ id: "updated-page" }) });
+  const page = await new AdminRunRepository(fake.client, DATA_SOURCE_ID).updatePage(PAGE_ID, { 메모: { rich_text: [] } });
+  assert.equal(page.id, "updated-page");
+  assert.ok("properties" in page);
+});
+
+test("속성이 없는 응답(일부만 담긴 페이지)은 오류로 본다", async () => {
+  const noProps = { id: "partial", in_trash: false, parent: { type: "data_source_id", data_source_id: DATA_SOURCE_ID } };
+  const repository = new AdminRunRepository(createFakeNotion({ retrieved: noProps }).client, DATA_SOURCE_ID);
+  await assert.rejects(() => repository.assertRunPage(PAGE_ID), /속성이 없습니다/);
+  const updateRepository = new AdminRunRepository(createFakeNotion({ updated: { id: "x" } }).client, DATA_SOURCE_ID);
+  await assert.rejects(() => updateRepository.updatePage(PAGE_ID, {}), /속성이 없습니다/);
 });

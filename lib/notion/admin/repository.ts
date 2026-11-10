@@ -1,11 +1,19 @@
 // 관리자 쓰기용 노션 데이터 접근 계층입니다. 노션 호출만 하고 검증·로그·오류 변환은 서비스 계층이 합니다.
 // 테스트(node --test)에서 바로 실행할 수 있도록 타입만 import하고, 클래스 필드는 매개변수 프로퍼티 없이 선언합니다.
-import type { Client, CreatePageParameters } from "@notionhq/client";
+import type { Client, CreatePageParameters, PageObjectResponse } from "@notionhq/client";
 
 import { AppError } from "../../errors.ts";
 import { RUN_PROPERTY } from "../properties.ts";
 
 type NotionProperties = NonNullable<CreatePageParameters["properties"]>;
+
+// 노션 응답이 속성을 가진 전체 페이지인지 확인합니다(일부만 담긴 응답이면 오류)
+function asFullPage(page: unknown): PageObjectResponse {
+  if (!page || typeof page !== "object" || !("properties" in page)) {
+    throw new Error("노션 응답에 페이지 속성이 없습니다");
+  }
+  return page as PageObjectResponse;
+}
 
 export class AdminRunRepository {
   private readonly notion: Client;
@@ -35,9 +43,9 @@ export class AdminRunRepository {
     return response.results[0]?.id ?? null;
   }
 
-  // 페이지 속성을 고칩니다
-  async updatePage(pageId: string, properties: NotionProperties): Promise<void> {
-    await this.notion.pages.update({ page_id: pageId, properties });
+  // 페이지 속성을 고치고, 노션이 돌려준 갱신된 페이지를 돌려줍니다(새 내용 버전을 만드는 데 씁니다)
+  async updatePage(pageId: string, properties: NotionProperties): Promise<PageObjectResponse> {
+    return asFullPage(await this.notion.pages.update({ page_id: pageId, properties }));
   }
 
   // 페이지를 노션 휴지통으로 보냅니다(복구할 수 있고, 영구 삭제는 하지 않습니다)
@@ -45,9 +53,10 @@ export class AdminRunRepository {
     await this.notion.pages.update({ page_id: pageId, in_trash: true });
   }
 
-  // 이 페이지가 러닝 기록 data source의 휴지통에 없는 페이지인지 확인합니다.
-  // 관리자 키로 워크스페이스의 다른 페이지를 고치거나 지우지 못하게 하는 방어입니다. 아니면 404를 던집니다
-  async assertRunPage(pageId: string): Promise<void> {
+  // 이 페이지가 러닝 기록 data source의 휴지통에 없는 페이지인지 확인하고, 맞으면 조회한 페이지를 돌려줍니다.
+  // 관리자 키로 워크스페이스의 다른 페이지를 고치거나 지우지 못하게 하는 방어입니다. 아니면 404를 던집니다.
+  // 한 번의 조회로 소속 확인과 현재 내용 읽기(버전 비교)를 함께 합니다
+  async assertRunPage(pageId: string): Promise<PageObjectResponse> {
     const page = await this.notion.pages.retrieve({ page_id: pageId });
     const inDataSource =
       "parent" in page && page.parent.type === "data_source_id" && page.parent.data_source_id === this.dataSourceId;
@@ -55,5 +64,6 @@ export class AdminRunRepository {
     if (!inDataSource || inTrash) {
       throw new AppError("NOT_FOUND", "해당 러닝 기록을 찾을 수 없습니다.", 404);
     }
+    return asFullPage(page);
   }
 }

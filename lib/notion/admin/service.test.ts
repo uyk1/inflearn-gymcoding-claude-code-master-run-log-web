@@ -2,9 +2,12 @@ import assert from "node:assert/strict";
 import test, { mock } from "node:test";
 
 import { AppError } from "../../errors.ts";
-import { createFakeNotion, DATA_SOURCE_ID, type FakeNotionOptions } from "./fake-notion.ts";
+import { computeVersion } from "./edit-version.ts";
+import { createFakeNotion, DATA_SOURCE_ID, runPage, type FakeNotionOptions } from "./fake-notion.ts";
+import { pageToRunFormValues } from "./page-to-form.ts";
 import { AdminRunRepository } from "./repository.ts";
 import { AdminRunService } from "./service.ts";
+import { baseProps, prop } from "../test-pages.ts";
 
 const KEY = "3f2b8c1e-5d4a-4b6c-9e7f-0a1b2c3d4e5f";
 const PAGE_ID = "22222222-2222-4222-8222-222222222222";
@@ -22,6 +25,16 @@ const validInput = (over: Record<string, unknown> = {}) => ({
   clientKey: KEY,
   ...over,
 });
+
+// 기본 페이지(fake의 retrieve 응답)의 현재 내용 버전입니다
+const DEFAULT_VERSION = computeVersion(pageToRunFormValues(runPage() as never));
+
+// 수정 입력(clientKey 없음)
+const updateInput = (over: Record<string, unknown> = {}) => {
+  const { clientKey: _omit, ...rest } = validInput(over);
+  void _omit;
+  return rest;
+};
 
 // 서비스가 남기는 오류 로그를 모아서 확인합니다
 function captureErrors() {
@@ -104,11 +117,10 @@ test("createRun: 노션 실패는 AppError(NOTION_WRITE_FAILED, 502)로 바뀌�
 
 test("updateRun: 소속을 확인한 뒤 수정하고, 출처와 외부ID는 보내지 않는다", async () => {
   const { fake, service } = setup();
-  const { clientKey: _omit, ...update } = validInput({ place: "한강" });
-  void _omit;
-  const result = await service.updateRun(PAGE_ID, update);
+  const result = await service.updateRun(PAGE_ID, updateInput({ place: "한강" }), DEFAULT_VERSION);
 
-  assert.deepEqual(result, { ok: true, id: PAGE_ID });
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.ok && result.id, PAGE_ID);
   assert.deepEqual(fake.methods(), ["pages.retrieve", "pages.update"]);
   const { properties } = fake.calls[1].args as { properties: Record<string, unknown> };
   assert.ok("제목" in properties && "장소" in properties);
@@ -118,9 +130,7 @@ test("updateRun: 소속을 확인한 뒤 수정하고, 출처와 외부ID는 보
 test("updateRun: 출처·외부ID·clientKey를 넣으면 거부하고 노션을 부르지 않는다", async () => {
   for (const extra of [{ source: "NRC" }, { externalId: "x" }, { clientKey: KEY }]) {
     const { fake, service } = setup();
-    const { clientKey: _omit, ...update } = validInput();
-    void _omit;
-    const result = await service.updateRun(PAGE_ID, { ...update, ...extra });
+    const result = await service.updateRun(PAGE_ID, { ...updateInput(), ...extra }, DEFAULT_VERSION);
     assert.equal(result.ok, false);
     assert.deepEqual(fake.calls, []);
   }
@@ -129,7 +139,7 @@ test("updateRun: 출처·외부ID·clientKey를 넣으면 거부하고 노션을
 test("updateRun: id 형식이 틀리면 노션을 부르지 않는다", async () => {
   for (const id of ["abc", "", undefined, 123, "../etc"]) {
     const { fake, service } = setup();
-    const result = await service.updateRun(id, { title: "t", date: "2026-11-05", distanceKm: 1, duration: "5:00" });
+    const result = await service.updateRun(id, { title: "t", date: "2026-11-05", distanceKm: 1, duration: "5:00" }, DEFAULT_VERSION);
     assert.equal(result.ok, false);
     assert.ok(!result.ok && result.fieldErrors.id);
     assert.deepEqual(fake.calls, []);
@@ -140,10 +150,8 @@ test("updateRun: 러닝 기록 DB의 페이지가 아니면 404이고 수정하�
   const { fake, service } = setup({
     retrieved: { id: PAGE_ID, in_trash: false, parent: { type: "page_id", page_id: "other" } },
   });
-  const { clientKey: _omit, ...update } = validInput();
-  void _omit;
   await assert.rejects(
-    () => service.updateRun(PAGE_ID, update),
+    () => service.updateRun(PAGE_ID, updateInput(), DEFAULT_VERSION),
     (error: unknown) => error instanceof AppError && error.status === 404,
   );
   assert.deepEqual(fake.methods(), ["pages.retrieve"]);
@@ -172,6 +180,137 @@ test("update·trash의 노션 실패도 AppError(502)로 바뀌고 로그에 메
   const notionError = Object.assign(new Error("SECRET-NOTION-MESSAGE"), { code: "internal_server_error", status: 500 });
   const { service } = setup({ failOn: { "pages.update": notionError } });
   await assert.rejects(() => service.trashRun(PAGE_ID), (e: unknown) => e instanceof AppError && e.code === "NOTION_WRITE_FAILED" && e.status === 502);
+  assert.ok(!JSON.stringify(log.mock.calls.map((c) => c.arguments)).includes("SECRET"));
+  log.mock.restore();
+});
+
+// ── 편집용 조회와 내용 버전 충돌 확인(Phase 4) ────────────────────────────────
+
+const noKeyFields = (properties: Record<string, unknown>) => !("출처" in properties) && !("외부ID" in properties);
+
+test("getRunForEdit: 노션에서 직접 읽어 입력칸 값과 내용 버전을 돌려준다", async () => {
+  const { fake, service } = setup();
+  const result = await service.getRunForEdit(PAGE_ID);
+
+  assert.equal(result.ok, true);
+  assert.ok(result.ok && result.version === DEFAULT_VERSION && result.values.title === "한강 아침 러닝" && result.values.tags === "회복, 장거리");
+  assert.deepEqual(fake.methods(), ["pages.retrieve"]);
+});
+
+test("getRunForEdit: 형식이 틀린 id는 노션을 부르지 않고, 다른 DB 페이지와 휴지통 페이지는 404", async () => {
+  const bad = setup();
+  const result = await bad.service.getRunForEdit("nope");
+  assert.equal(result.ok, false);
+  assert.deepEqual(bad.fake.calls, []);
+
+  for (const retrieved of [
+    runPage({ parent: { type: "page_id", page_id: "other" } }),
+    runPage({ parent: { type: "workspace", workspace: true } }),
+    runPage({ inTrash: true }),
+  ]) {
+    const { service } = setup({ retrieved });
+    await assert.rejects(() => service.getRunForEdit(PAGE_ID), (e: unknown) => e instanceof AppError && e.code === "NOT_FOUND" && e.status === 404);
+  }
+});
+
+test("updateRun: 버전이 같으면 수정하고, 노션이 돌려준 페이지로 만든 새 버전을 돌려준다", async () => {
+  const updated = runPage({ properties: baseProps({ 제목: prop.title("고친 제목"), "거리(Km)": prop.num(6) }) });
+  const { fake, service } = setup({ updated });
+  const result = await service.updateRun(PAGE_ID, updateInput({ title: "고친 제목", distanceKm: 6 }), DEFAULT_VERSION);
+
+  assert.equal(result.ok, true);
+  assert.ok(result.ok && result.id === PAGE_ID);
+  assert.ok(result.ok && result.version === computeVersion(pageToRunFormValues(updated as never)));
+  assert.ok(result.ok && result.version !== DEFAULT_VERSION);
+  assert.deepEqual(fake.methods(), ["pages.retrieve", "pages.update"]);
+  assert.ok(noKeyFields((fake.calls[1].args as { properties: Record<string, unknown> }).properties));
+});
+
+test("updateRun: 노션에서 먼저 바뀌어 버전이 다르면 409 CONFLICT이고 노션을 수정하지 않는다", async () => {
+  // 화면을 연 뒤(DEFAULT_VERSION) 노션에서 제목이 바뀐 상태
+  const changedInNotion = runPage({ properties: baseProps({ 제목: prop.title("노션에서 고친 제목") }) });
+  const { fake, service } = setup({ retrieved: changedInNotion });
+
+  await assert.rejects(
+    () => service.updateRun(PAGE_ID, updateInput({ title: "내가 고친 제목" }), DEFAULT_VERSION),
+    (e: unknown) => e instanceof AppError && e.code === "CONFLICT" && e.status === 409,
+  );
+  assert.deepEqual(fake.methods(), ["pages.retrieve"], "pages.update가 호출되면 안 됨");
+});
+
+test("updateRun: 우리가 쓰지 않는 항목(출처, 외부ID)이나 수정 시각이 바뀐 것은 충돌이 아니다", async () => {
+  const touched = runPage({
+    lastEditedTime: "2026-11-10T09:59:00.000Z",
+    properties: baseProps({ 출처: prop.select("NRC"), 외부ID: prop.rich("nrc-123") }),
+  });
+  const { fake, service } = setup({ retrieved: touched });
+  const result = await service.updateRun(PAGE_ID, updateInput(), DEFAULT_VERSION);
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(fake.methods(), ["pages.retrieve", "pages.update"]);
+});
+
+test("updateRun: 우리가 쓰는 항목 8개 중 어느 것이 노션에서 바뀌어도 충돌로 본다", async () => {
+  const changes: Record<string, unknown>[] = [
+    { 제목: prop.title("다름") },
+    { 날짜: prop.date("2026-11-04") },
+    { "거리(Km)": prop.num(7) },
+    { 소요시간: prop.rich("26:00") },
+    { 장소: prop.rich("다른 곳") },
+    { 메모: prop.rich("다른 메모") },
+    { 강도: prop.select("HARD") },
+    { 태그: prop.multi(["다른"]) },
+  ];
+  for (const change of changes) {
+    const { service } = setup({ retrieved: runPage({ properties: baseProps(change) }) });
+    await assert.rejects(
+      () => service.updateRun(PAGE_ID, updateInput(), DEFAULT_VERSION),
+      (e: unknown) => e instanceof AppError && e.code === "CONFLICT",
+      Object.keys(change)[0],
+    );
+  }
+});
+
+test("updateRun: 돌려받은 새 버전으로 이어서 수정해도 충돌로 오판하지 않는다", async () => {
+  // 1차 수정: 노션이 돌려준 페이지(고친 내용)
+  const afterFirst = runPage({ properties: baseProps({ 제목: prop.title("1차 수정") }) });
+  const first = setup({ updated: afterFirst });
+  const r1 = await first.service.updateRun(PAGE_ID, updateInput({ title: "1차 수정" }), DEFAULT_VERSION);
+  assert.ok(r1.ok);
+
+  // 2차 수정: 이제 노션의 현재 내용은 1차 수정본이고, 화면은 r1.version을 들고 있다
+  const second = setup({ retrieved: afterFirst, updated: runPage({ properties: baseProps({ 제목: prop.title("2차 수정") }) }) });
+  const r2 = await second.service.updateRun(PAGE_ID, updateInput({ title: "2차 수정" }), r1.ok ? r1.version : "");
+  assert.equal(r2.ok, true);
+  assert.deepEqual(second.fake.methods(), ["pages.retrieve", "pages.update"]);
+});
+
+test("updateRun: 버전이 없거나 문자열이 아니면 노션을 부르지 않고 필드 오류", async () => {
+  for (const version of [undefined, null, "", 123, {}]) {
+    const { fake, service } = setup();
+    const result = await service.updateRun(PAGE_ID, updateInput(), version);
+    assert.equal(result.ok, false);
+    assert.ok(!result.ok && result.fieldErrors.version);
+    assert.deepEqual(fake.calls, []);
+  }
+});
+
+test("updateRun: 입력이 틀리면 버전이 맞아도 노션을 부르지 않는다", async () => {
+  const { fake, service } = setup();
+  const result = await service.updateRun(PAGE_ID, updateInput({ duration: "12:5" }), DEFAULT_VERSION);
+  assert.equal(result.ok, false);
+  assert.ok(!result.ok && result.fieldErrors.duration);
+  assert.deepEqual(fake.calls, []);
+});
+
+test("updateRun: 노션 수정이 실패하면 502이고 충돌 거부(409)와 구분된다", async () => {
+  const log = captureErrors();
+  const notionError = Object.assign(new Error("SECRET-NOTION-MESSAGE"), { code: "internal_server_error", status: 500 });
+  const { service } = setup({ failOn: { "pages.update": notionError } });
+  await assert.rejects(
+    () => service.updateRun(PAGE_ID, updateInput(), DEFAULT_VERSION),
+    (e: unknown) => e instanceof AppError && e.code === "NOTION_WRITE_FAILED" && e.status === 502,
+  );
   assert.ok(!JSON.stringify(log.mock.calls.map((c) => c.arguments)).includes("SECRET"));
   log.mock.restore();
 });
