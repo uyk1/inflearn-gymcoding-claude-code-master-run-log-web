@@ -2,8 +2,11 @@
 // 로그에는 작업 이름과 오류의 name, code, status만 남깁니다(입력값, 오류 메시지, 키는 남기지 않음).
 // 테스트(node --test)에서 바로 실행할 수 있도록 상대 경로 import와 매개변수 프로퍼티 없는 필드를 씁니다.
 import { AppError } from "../../errors.ts";
+import { computeVersion } from "./edit-version.ts";
 import { isPageId, parseRunInput, parseRunUpdate } from "./input.ts";
+import { pageToRunFormValues } from "./page-to-form.ts";
 import type { AdminRunRepository } from "./repository.ts";
+import type { RunFormValues } from "./run-form.ts";
 import { toExternalId, toNotionProperties, toNotionUpdateProperties } from "./to-properties.ts";
 
 type FieldErrors = Record<string, string>;
@@ -11,6 +14,12 @@ type FieldErrors = Record<string, string>;
 // 입력이 틀리면 ok: false와 필드별 오류만 돌려주고 노션은 부르지 않습니다. 노션 실패는 AppError(502)를 던집니다
 export type CreateRunResult = { ok: true; id: string; created: boolean } | { ok: false; fieldErrors: FieldErrors };
 export type MutateRunResult = { ok: true; id: string } | { ok: false; fieldErrors: FieldErrors };
+// 수정 화면에 채울 입력칸 값과 그 시점의 내용 버전
+export type EditRunResult = { ok: true; id: string; values: RunFormValues; version: string } | { ok: false; fieldErrors: FieldErrors };
+// 수정 결과: 노션이 돌려준 페이지로 만든 새 내용 버전을 함께 돌려줍니다
+export type UpdateRunResult = { ok: true; id: string; version: string } | { ok: false; fieldErrors: FieldErrors };
+
+const INVALID_ID = { id: "기록 식별값이 올바르지 않습니다." };
 
 export class AdminRunService {
   private readonly repository: AdminRunRepository;
@@ -34,22 +43,43 @@ export class AdminRunService {
     });
   }
 
-  // 기록을 고칩니다. 출처와 외부ID는 바뀌지 않습니다. (노션에서 먼저 바뀐 내용과의 충돌 확인은 Phase 4)
-  async updateRun(pageId: unknown, raw: unknown): Promise<MutateRunResult> {
-    if (!isPageId(pageId)) return { ok: false, fieldErrors: { id: "기록 식별값이 올바르지 않습니다." } };
+  // 수정 화면용 조회입니다. 공유 캐시가 아니라 노션에서 직접 읽어, 입력칸에 채울 원문 값과 그 시점의 내용 버전을 돌려줍니다.
+  // 러닝 기록 DB의 페이지가 아니거나 휴지통에 있으면 404입니다
+  async getRunForEdit(pageId: unknown): Promise<EditRunResult> {
+    if (!isPageId(pageId)) return { ok: false, fieldErrors: INVALID_ID };
+
+    return this.guard("read", async () => {
+      const page = await this.repository.assertRunPage(pageId);
+      const values = pageToRunFormValues(page);
+      return { ok: true as const, id: pageId, values, version: computeVersion(values) };
+    });
+  }
+
+  // 기록을 고칩니다. 출처와 외부ID는 바뀌지 않습니다.
+  // baseVersion은 수정 화면을 열 때 받은 내용 버전입니다. 저장 직전에 노션에서 다시 읽은 현재 버전과 다르면
+  // 노션에서 먼저 바뀐 것이므로 덮어쓰지 않고 CONFLICT(409)로 거부합니다.
+  // 한계: "다시 읽기"와 "수정" 사이(밀리초)의 노션 수정은 막지 못합니다(노션에 조건부 갱신이 없음)
+  async updateRun(pageId: unknown, raw: unknown, baseVersion: unknown): Promise<UpdateRunResult> {
+    if (!isPageId(pageId)) return { ok: false, fieldErrors: INVALID_ID };
+    if (typeof baseVersion !== "string" || baseVersion === "") {
+      return { ok: false, fieldErrors: { version: "기록 버전이 없습니다. 수정 화면을 새로 열어 주세요." } };
+    }
     const parsed = parseRunUpdate(raw);
     if (!parsed.success) return { ok: false, fieldErrors: parsed.fieldErrors };
 
     return this.guard("update", async () => {
-      await this.repository.assertRunPage(pageId);
-      await this.repository.updatePage(pageId, toNotionUpdateProperties(parsed.data));
-      return { ok: true as const, id: pageId };
+      const page = await this.repository.assertRunPage(pageId);
+      if (computeVersion(pageToRunFormValues(page)) !== baseVersion) {
+        throw new AppError("CONFLICT", "노션에서 먼저 바뀐 내용이 있어 저장하지 않았습니다.", 409);
+      }
+      const updated = await this.repository.updatePage(pageId, toNotionUpdateProperties(parsed.data));
+      return { ok: true as const, id: pageId, version: computeVersion(pageToRunFormValues(updated)) };
     });
   }
 
   // 기록을 노션 휴지통으로 보냅니다(복구 가능)
   async trashRun(pageId: unknown): Promise<MutateRunResult> {
-    if (!isPageId(pageId)) return { ok: false, fieldErrors: { id: "기록 식별값이 올바르지 않습니다." } };
+    if (!isPageId(pageId)) return { ok: false, fieldErrors: INVALID_ID };
 
     return this.guard("trash", async () => {
       await this.repository.assertRunPage(pageId);
