@@ -81,12 +81,21 @@ export class AdminRunService {
     });
   }
 
-  // 기록을 노션 휴지통으로 보냅니다(복구 가능)
-  async trashRun(pageId: unknown): Promise<MutateRunResult> {
+  // 기록을 노션 휴지통으로 보냅니다(복구 가능).
+  // baseVersion은 수정 화면을 열 때 받은 내용 버전입니다. 삭제 직전에 노션에서 다시 읽은 현재 버전과 다르면
+  // 노션에서 먼저 바뀐 것이므로 삭제하지 않고 CONFLICT(409)로 거부합니다(화면의 확인 단계를 건너뛴 직접 호출과
+  // 낡은 화면에서의 오삭제를 줄입니다). 수정과 같은 한계: "다시 읽기"와 "삭제" 사이(밀리초)의 변경은 막지 못합니다
+  async trashRun(pageId: unknown, baseVersion: unknown): Promise<MutateRunResult> {
     if (!isPageId(pageId)) return { ok: false, fieldErrors: INVALID_ID };
+    if (typeof baseVersion !== "string" || baseVersion === "") {
+      return { ok: false, fieldErrors: { version: "기록 버전이 없습니다. 수정 화면을 새로 열어 주세요." } };
+    }
 
     return this.guard("trash", async () => {
-      await this.repository.assertRunPage(pageId);
+      const page = await this.repository.assertRunPage(pageId);
+      if (computePageVersion(page) !== baseVersion) {
+        throw new AppError("CONFLICT", "노션에서 먼저 바뀐 내용이 있어 삭제하지 않았습니다.", 409);
+      }
       await this.repository.trashPage(pageId);
       return { ok: true as const, id: pageId };
     });

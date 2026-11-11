@@ -159,18 +159,18 @@ test("updateRun: 러닝 기록 DB의 페이지가 아니면 404이고 수정하�
 
 test("trashRun: 소속을 확인한 뒤 휴지통으로 보낸다", async () => {
   const { fake, service } = setup();
-  assert.deepEqual(await service.trashRun(PAGE_ID), { ok: true, id: PAGE_ID });
+  assert.deepEqual(await service.trashRun(PAGE_ID, DEFAULT_VERSION), { ok: true, id: PAGE_ID });
   assert.deepEqual(fake.methods(), ["pages.retrieve", "pages.update"]);
   assert.deepEqual(fake.calls[1].args, { page_id: PAGE_ID, in_trash: true });
 });
 
 test("trashRun: 다른 DB의 페이지는 지우지 않고, 형식이 틀린 id는 노션을 부르지 않는다", async () => {
   const other = setup({ retrieved: { id: PAGE_ID, in_trash: false, parent: { type: "workspace", workspace: true } } });
-  await assert.rejects(() => other.service.trashRun(PAGE_ID), (e: unknown) => e instanceof AppError && e.status === 404);
+  await assert.rejects(() => other.service.trashRun(PAGE_ID, DEFAULT_VERSION), (e: unknown) => e instanceof AppError && e.status === 404);
   assert.deepEqual(other.fake.methods(), ["pages.retrieve"]);
 
   const bad = setup();
-  const result = await bad.service.trashRun("not-a-uuid");
+  const result = await bad.service.trashRun("not-a-uuid", DEFAULT_VERSION);
   assert.equal(result.ok, false);
   assert.deepEqual(bad.fake.calls, []);
 });
@@ -179,7 +179,7 @@ test("노션에 없는 페이지(object_not_found)는 502가 아니라 404이고
   const notFound = Object.assign(new Error("Could not find page"), { code: "object_not_found", status: 404 });
   for (const run of [
     (s: AdminRunService) => s.getRunForEdit(PAGE_ID),
-    (s: AdminRunService) => s.trashRun(PAGE_ID),
+    (s: AdminRunService) => s.trashRun(PAGE_ID, DEFAULT_VERSION),
     (s: AdminRunService) => s.updateRun(PAGE_ID, updateInput(), DEFAULT_VERSION),
   ]) {
     const { service, fake } = setup({ failOn: { "pages.retrieve": notFound } });
@@ -192,7 +192,7 @@ test("update·trash의 노션 실패도 AppError(502)로 바뀌고 로그에 메
   const log = captureErrors();
   const notionError = Object.assign(new Error("SECRET-NOTION-MESSAGE"), { code: "internal_server_error", status: 500 });
   const { service } = setup({ failOn: { "pages.update": notionError } });
-  await assert.rejects(() => service.trashRun(PAGE_ID), (e: unknown) => e instanceof AppError && e.code === "NOTION_WRITE_FAILED" && e.status === 502);
+  await assert.rejects(() => service.trashRun(PAGE_ID, DEFAULT_VERSION), (e: unknown) => e instanceof AppError && e.code === "NOTION_WRITE_FAILED" && e.status === 502);
   assert.ok(!JSON.stringify(log.mock.calls.map((c) => c.arguments)).includes("SECRET"));
   log.mock.restore();
 });
@@ -348,4 +348,26 @@ test("getRunForEdit: 제외 사유를 돌려주고(정상이면 빈 배열) 형�
 
   const normal = await setup().service.getRunForEdit(PAGE_ID);
   assert.ok(normal.ok && normal.excludedReasons.length === 0);
+});
+
+test("trashRun: 내용 버전이 다르면 409이고 휴지통으로 보내지 않는다", async () => {
+  const { fake, service } = setup();
+  await assert.rejects(() => service.trashRun(PAGE_ID, "0".repeat(32)), (e: unknown) => e instanceof AppError && e.code === "CONFLICT" && e.status === 409);
+  assert.deepEqual(fake.methods(), ["pages.retrieve"]);
+});
+
+test("trashRun: 버전이 없거나 문자열이 아니면 노션을 부르지 않고 version 오류", async () => {
+  for (const version of [undefined, null, "", 123, {}]) {
+    const { fake, service } = setup();
+    const result = await service.trashRun(PAGE_ID, version);
+    assert.ok(!result.ok && result.fieldErrors.version, String(version));
+    assert.deepEqual(fake.calls, []);
+  }
+});
+
+test("trashRun: 출처·외부ID만 바뀐 기록은 충돌이 아니고, 제외 행도 같은 규칙이다", async () => {
+  const changed = runPage({ properties: baseProps({ 출처: prop.select("기타"), 외부ID: prop.rich("x") }) });
+  const { fake, service } = setup({ retrieved: changed });
+  assert.deepEqual(await service.trashRun(PAGE_ID, DEFAULT_VERSION), { ok: true, id: PAGE_ID });
+  assert.deepEqual(fake.methods(), ["pages.retrieve", "pages.update"]);
 });

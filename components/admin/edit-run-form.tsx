@@ -12,6 +12,7 @@ import type { ExcludedReason } from "@/lib/notion/dto";
 import { excludedFields, excludedNoticeText } from "@/lib/notion/admin/excluded-fields";
 import { mapApiFailureToFieldErrors, toRunPayload, type RunFormValues } from "@/lib/notion/admin/run-form";
 import { cn } from "@/lib/utils";
+import { DeleteRun } from "./delete-run";
 import { createRunFormResolver, RunFormFields } from "./run-form-fields";
 
 // 수정 API는 clientKey를 받지 않으므로 검증에만 쓰는 형식이 맞는 자리표시 값입니다(서버로 보내지 않음)
@@ -45,6 +46,8 @@ export function EditRunForm({
   const [notice, setNotice] = useState<Notice>(null);
   // 제외된 기록을 고쳐 저장했는지(저장 뒤 같은 화면에서 다시 저장해도 제외 안내가 되살아나지 않게 합니다)
   const [fixed, setFixed] = useState(false);
+  // 삭제 확인 단계에 보여 줄 제목(저장하면 저장한 제목으로 바뀝니다)
+  const [savedTitle, setSavedTitle] = useState(initialValues.title);
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm<RunFormValues>({
@@ -57,6 +60,7 @@ export function EditRunForm({
   // 버전이 아니라 이 객체를 기준으로 삼아, 노션 내용이 처음 열었을 때와 같아져도 다시 채웁니다
   useEffect(() => {
     setVersion(initialVersion);
+    setSavedTitle(initialValues.title);
     form.reset(initialValues);
     setFormError(null);
     setFixed(false);
@@ -103,6 +107,7 @@ export function EditRunForm({
       if (response.ok && body?.success) {
         // 다음 수정이 오탐 충돌 없이 저장되도록 응답의 새 버전으로 바꿉니다
         setVersion(body.data.version);
+        setSavedTitle(values.title);
         setFixed(true);
         setNotice("saved");
         return;
@@ -132,72 +137,78 @@ export function EditRunForm({
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-6">
-      {/* 저장에 성공하면 더 이상 제외된 기록이 아니므로 안내를 감춥니다. 오류 안내(FieldError)와 겹치지 않도록 note 역할만 씁니다 */}
-      {excludedReasons.length > 0 && !fixed && (
-        <p role="note" className="border-destructive/50 text-destructive rounded-xl border p-3 text-sm break-keep">
-          {excludedNoticeText(excludedReasons)}
-        </p>
-      )}
-      <RunFormFields form={form} />
+  <>
+      <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-6">
+        {/* 저장에 성공하면 더 이상 제외된 기록이 아니므로 안내를 감춥니다. 오류 안내(FieldError)와 겹치지 않도록 note 역할만 씁니다 */}
+        {excludedReasons.length > 0 && !fixed && (
+          <p role="note" className="border-destructive/50 text-destructive rounded-xl border p-3 text-sm break-keep">
+            {excludedNoticeText(excludedReasons)}
+          </p>
+        )}
+        <RunFormFields form={form} />
 
-      {notice && (
-        // 오류 안내(FieldError)가 이미 role=alert라서 바깥 래퍼에는 역할을 주지 않아 이중 낭독을 막습니다
-        <div ref={noticeRef} tabIndex={-1} role={notice === "saved" || notice === "reloaded" ? "status" : undefined} className="space-y-3 outline-none">
-          {notice === "saved" && (
-            <p className="text-sm font-medium">
-              {excludedReasons.length > 0 ? "저장되었습니다. 이제 목록에 표시됩니다." : "저장되었습니다."}{" "}
-              <Link href={`/runs/${id}`} className="underline underline-offset-4">
-                기록 보기
-              </Link>
-            </p>
-          )}
-          {notice === "reloaded" && <p className="text-sm font-medium">노션의 최신 내용을 불러왔습니다.</p>}
-          {notice === "conflict" && (
-            <FieldError>
-              노션에서 먼저 바뀐 내용이 있어 저장하지 않았습니다. 최신 내용을 불러오면 지금 입력한 내용은 사라집니다.
-              <Button
-                type="button"
-                variant="outline"
-                size="lg"
-                className="mt-3 w-full"
-                disabled={reloading}
-                onClick={() => {
-                  reloadingRef.current = true;
-                  startReload(() => router.refresh());
-                }}
-              >
-                {reloading ? "불러오는 중..." : "최신 내용 불러오기"}
-              </Button>
-            </FieldError>
-          )}
-          {notice === "gone" && (
-            <FieldError>
-              이미 삭제된 기록입니다.{" "}
-              <Link href="/admin/runs" className="underline underline-offset-4">
-                기록 목록으로
-              </Link>
-            </FieldError>
-          )}
-          {notice === "expired" && (
-            <FieldError>
-              로그인 시간이 지났습니다. 입력한 내용은 이 화면에 남아 있습니다.{" "}
-              <a href="/admin/login" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">
-                새 탭에서 로그인
-              </a>
-              한 뒤 이 화면에서 다시 저장해 주세요.
-            </FieldError>
-          )}
-        </div>
-      )}
-      {formError && <FieldError>{formError}</FieldError>}
+        {notice && (
+          // 오류 안내(FieldError)가 이미 role=alert라서 바깥 래퍼에는 역할을 주지 않아 이중 낭독을 막습니다
+          <div ref={noticeRef} tabIndex={-1} role={notice === "saved" || notice === "reloaded" ? "status" : undefined} className="space-y-3 outline-none">
+            {notice === "saved" && (
+              <p className="text-sm font-medium">
+                {excludedReasons.length > 0 ? "저장되었습니다. 이제 목록에 표시됩니다." : "저장되었습니다."}{" "}
+                <Link href={`/runs/${id}`} className="underline underline-offset-4">
+                  기록 보기
+                </Link>
+              </p>
+            )}
+            {notice === "reloaded" && <p className="text-sm font-medium">노션의 최신 내용을 불러왔습니다.</p>}
+            {notice === "conflict" && (
+              <FieldError>
+                노션에서 먼저 바뀐 내용이 있어 저장하지 않았습니다. 최신 내용을 불러오면 지금 입력한 내용은 사라집니다.
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  className="mt-3 w-full"
+                  disabled={reloading}
+                  onClick={() => {
+                    reloadingRef.current = true;
+                    startReload(() => router.refresh());
+                  }}
+                >
+                  {reloading ? "불러오는 중..." : "최신 내용 불러오기"}
+                </Button>
+              </FieldError>
+            )}
+            {notice === "gone" && (
+              <FieldError>
+                이미 삭제된 기록입니다.{" "}
+                <Link href="/admin/runs" className="underline underline-offset-4">
+                  기록 목록으로
+                </Link>
+              </FieldError>
+            )}
+            {notice === "expired" && (
+              <FieldError>
+                로그인 시간이 지났습니다. 입력한 내용은 이 화면에 남아 있습니다.{" "}
+                <a href="/admin/login" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">
+                  새 탭에서 로그인
+                </a>
+                한 뒤 이 화면에서 다시 저장해 주세요.
+              </FieldError>
+            )}
+          </div>
+        )}
+        {formError && <FieldError>{formError}</FieldError>}
 
-      <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-        {submitting ? "저장 중..." : "저장"}
-      </Button>
-      <Link href="/admin/runs" className={cn(buttonVariants({ variant: "outline", size: "lg" }), "w-full")}>
-        목록으로
-      </Link>
-    </form>
+        <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+          {submitting ? "저장 중..." : "저장"}
+        </Button>
+        <Link href="/admin/runs" className={cn(buttonVariants({ variant: "outline", size: "lg" }), "w-full")}>
+          목록으로
+        </Link>
+      </form>
+      {/* 삭제는 폼과 같은 버전을 공유합니다(저장해서 버전이 바뀌어도 오탐 충돌이 나지 않게 이 컴포넌트가 함께 그립니다) */}
+      <div className="border-t pt-6">
+        <DeleteRun id={id} title={savedTitle.trim() || "(제목 없음)"} version={version} />
+      </div>
+    </>
   );
 }

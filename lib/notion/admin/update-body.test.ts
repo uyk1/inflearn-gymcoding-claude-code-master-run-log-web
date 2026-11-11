@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { parseUpdateBody } from "./update-body.ts";
+import { parseUpdateBody, parseVersionBody } from "./update-body.ts";
 
 const VERSION = "0123456789abcdef0123456789abcdef";
 
@@ -43,4 +43,17 @@ test("오류 문구에 입력값이 담기지 않는다", () => {
     const result = parseUpdateBody(raw);
     assert.ok(!result.ok && !JSON.stringify(result.fieldErrors).includes("SECRET"));
   }
+});
+
+test("parseVersionBody: version만 있는 본문은 통과하고, 없거나 잘못됐거나 다른 항목이 있으면 거부한다", () => {
+  assert.deepEqual(parseVersionBody({ version: VERSION }), { ok: true, version: VERSION });
+  for (const version of [undefined, null, "", 123, {}, [], "a".repeat(65)]) {
+    const result = parseVersionBody({ version });
+    assert.ok(!result.ok && result.fieldErrors.version && !result.fieldErrors._form, String(version));
+  }
+  for (const raw of [null, undefined, "x", 1, [], { version: VERSION, title: "t" }, { version: VERSION, extra: 1 }]) {
+    const result = parseVersionBody(raw);
+    assert.ok(!result.ok && result.fieldErrors._form, JSON.stringify(raw));
+  }
+  assert.ok(!JSON.stringify(parseVersionBody({ version: 1, title: "SECRET-9" })).includes("SECRET"));
 });
