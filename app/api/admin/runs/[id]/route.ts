@@ -5,7 +5,7 @@ import { apiFailure, apiSuccess } from "@/lib/api/response";
 import { checkAdminRequest, errorResponse, json, readJsonBody } from "@/lib/auth/admin-request";
 import { createAdminRunService } from "@/lib/notion/admin/container";
 import { isPageId } from "@/lib/notion/admin/input";
-import { parseUpdateBody } from "@/lib/notion/admin/update-body";
+import { parseUpdateBody, parseVersionBody } from "@/lib/notion/admin/update-body";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -43,7 +43,9 @@ export async function PATCH(request: NextRequest, { params }: Context) {
   }
 }
 
-// 기록 삭제: 노션 휴지통으로만 보냅니다(복구할 수 있고 영구 삭제는 하지 않습니다). 화면에서 확인 단계를 거친 뒤 호출합니다
+// 기록 삭제: 노션 휴지통으로만 보냅니다(복구할 수 있고 영구 삭제는 하지 않습니다). 화면에서 확인 단계를 거친 뒤 호출합니다.
+// 본문은 { version }입니다(DELETE에 본문을 쓰는 것은 흔치 않지만 fetch와 Route Handler 모두 지원합니다).
+// version은 수정 화면을 열 때 받은 내용 버전이며, 노션의 현재 내용과 다르면 409로 거부해 삭제하지 않습니다
 export async function DELETE(request: NextRequest, { params }: Context) {
   const rejected = await checkAdminRequest(request);
   if (rejected) return rejected;
@@ -53,8 +55,15 @@ export async function DELETE(request: NextRequest, { params }: Context) {
     return json(apiFailure("VALIDATION_FAILED", "입력값을 확인해 주세요.", { id: "기록 식별값이 올바르지 않습니다." }), 400);
   }
 
+  const body = await readJsonBody(request);
+  if (!body.ok) return body.response;
+  const parsed = parseVersionBody(body.body);
+  if (!parsed.ok) {
+    return json(apiFailure("VALIDATION_FAILED", "입력값을 확인해 주세요.", parsed.fieldErrors), 400);
+  }
+
   try {
-    const result = await createAdminRunService().trashRun(id);
+    const result = await createAdminRunService().trashRun(id, parsed.version);
     if (!result.ok) {
       return json(apiFailure("VALIDATION_FAILED", "입력값을 확인해 주세요.", result.fieldErrors), 400);
     }

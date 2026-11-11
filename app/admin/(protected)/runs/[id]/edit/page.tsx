@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { DeleteRun } from "@/components/admin/delete-run";
 import { EditRunForm } from "@/components/admin/edit-run-form";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { AppError } from "@/lib/errors";
@@ -53,9 +52,6 @@ export default async function EditRunPage({ params }: { params: Promise<{ id: st
         initialVersion={result.version}
         excludedReasons={result.excludedReasons}
       />
-      <div className="border-t pt-6">
-        <DeleteRun id={result.id} title={result.values.title || "(제목 없음)"} />
-      </div>
     </div>
   );
 }
