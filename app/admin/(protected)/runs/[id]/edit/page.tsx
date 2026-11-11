@@ -47,7 +47,12 @@ export default async function EditRunPage({ params }: { params: Promise<{ id: st
           </ul>
         </div>
       )}
-      <EditRunForm id={result.id} initialValues={result.values} initialVersion={result.version} />
+      <EditRunForm
+        id={result.id}
+        initialValues={result.values}
+        initialVersion={result.version}
+        excludedReasons={result.excludedReasons}
+      />
       <div className="border-t pt-6">
         <DeleteRun id={result.id} title={result.values.title || "(제목 없음)"} />
       </div>

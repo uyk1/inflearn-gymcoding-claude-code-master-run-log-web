@@ -8,6 +8,8 @@ import { useForm } from "react-hook-form";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field";
 import type { ApiFailure, ApiSuccess } from "@/lib/api/response";
+import type { ExcludedReason } from "@/lib/notion/dto";
+import { excludedFields, excludedNoticeText } from "@/lib/notion/admin/excluded-fields";
 import { mapApiFailureToFieldErrors, toRunPayload, type RunFormValues } from "@/lib/notion/admin/run-form";
 import { cn } from "@/lib/utils";
 import { createRunFormResolver, RunFormFields } from "./run-form-fields";
@@ -24,10 +26,13 @@ export function EditRunForm({
   id,
   initialValues,
   initialVersion,
+  excludedReasons,
 }: {
   id: string;
   initialValues: RunFormValues;
   initialVersion: string;
+  // 이 기록이 목록에서 제외돼 있는 사유(정상 기록이면 빈 배열)
+  excludedReasons: ExcludedReason[];
 }) {
   const router = useRouter();
   const inFlightRef = useRef(false);
@@ -38,6 +43,8 @@ export function EditRunForm({
   const [version, setVersion] = useState(initialVersion);
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
+  // 제외된 기록을 고쳐 저장했는지(저장 뒤 같은 화면에서 다시 저장해도 제외 안내가 되살아나지 않게 합니다)
+  const [fixed, setFixed] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const form = useForm<RunFormValues>({
@@ -52,8 +59,11 @@ export function EditRunForm({
     setVersion(initialVersion);
     form.reset(initialValues);
     setFormError(null);
+    setFixed(false);
     setNotice(reloadingRef.current ? "reloaded" : null);
     reloadingRef.current = false;
+    // 제외 사유에 해당하는 칸은 열자마자 서버와 같은 검증으로 오류를 보여 줍니다(어디를 고칠지 바로 알 수 있게)
+    if (excludedReasons.length > 0) void form.trigger(excludedFields(excludedReasons));
     // form과 initialVersion은 initialValues와 함께 바뀌므로 initialValues만 기준으로 합니다
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialValues]);
@@ -84,6 +94,7 @@ export function EditRunForm({
       if (response.ok && body?.success) {
         // 다음 수정이 오탐 충돌 없이 저장되도록 응답의 새 버전으로 바꿉니다
         setVersion(body.data.version);
+        setFixed(true);
         setNotice("saved");
         return;
       }
@@ -113,6 +124,12 @@ export function EditRunForm({
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-6">
+      {/* 저장에 성공하면 더 이상 제외된 기록이 아니므로 안내를 감춥니다. 오류 안내(FieldError)와 겹치지 않도록 note 역할만 씁니다 */}
+      {excludedReasons.length > 0 && !fixed && (
+        <p role="note" className="border-destructive/50 text-destructive rounded-xl border p-3 text-sm break-keep">
+          {excludedNoticeText(excludedReasons)}
+        </p>
+      )}
       <RunFormFields form={form} />
 
       {notice && (
@@ -120,7 +137,7 @@ export function EditRunForm({
         <div ref={noticeRef} tabIndex={-1} role={notice === "saved" || notice === "reloaded" ? "status" : undefined} className="space-y-3 outline-none">
           {notice === "saved" && (
             <p className="text-sm font-medium">
-              저장되었습니다.{" "}
+              {excludedReasons.length > 0 ? "저장되었습니다. 이제 목록에 표시됩니다." : "저장되었습니다."}{" "}
               <Link href={`/runs/${id}`} className="underline underline-offset-4">
                 기록 보기
               </Link>
