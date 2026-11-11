@@ -32,3 +32,19 @@ export function pageToRunFormValues(page: { properties: PageObjectResponse["prop
     tags: readMultiSelect(properties[RUN_PROPERTY.tags]).join(", "),
   };
 }
+
+// 수정 화면에서 저장하면 노션에 적힌 값이 달라지는 경우를 알려 주는 문구 목록입니다(바꾸지 않았으면 빈 배열).
+// 폼이 모르는 강도 값은 저장하면 지워지고, 전각 쉼표(，)가 든 태그 이름은 저장하면 둘로 나뉩니다
+export function detectLossyChanges(page: { properties: PageObjectResponse["properties"] }): string[] {
+  const properties = page.properties ?? {};
+  const notices: string[] = [];
+
+  const intensity = readSelect(properties[RUN_PROPERTY.intensity]);
+  if (intensity && !INTENSITIES.some((option) => option === intensity)) {
+    notices.push(`강도 "${intensity}"는 이 화면에서 고를 수 없는 값이라 저장하면 지워집니다.`);
+  }
+  for (const tag of readMultiSelect(properties[RUN_PROPERTY.tags])) {
+    if (tag.includes("，")) notices.push(`태그 "${tag}"는 전각 쉼표(，)가 들어 있어 저장하면 둘로 나뉩니다.`);
+  }
+  return notices;
+}

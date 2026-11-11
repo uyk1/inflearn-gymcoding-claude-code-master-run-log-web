@@ -1,3 +1,6 @@
+// 소요시간 상한(초): 48시간. 울트라 러닝까지 담고, 자릿수 오타로 생기는 터무니없는 값은 거릅니다
+export const MAX_DURATION_SECONDS = 48 * 3600;
+
 // 소요시간 문자열(mm:ss 또는 h:mm:ss)을 초 단위로 바꿉니다. 형식이 맞지 않으면 null을 반환합니다
 // 첫 구간은 자릿수 자유, 이후 구간(초, 분)은 반드시 두 자리입니다 ("12:5" 같은 오타 방지)
 export function parseDurationToSeconds(value: string): number | null {
@@ -13,7 +16,8 @@ export function parseDurationToSeconds(value: string): number | null {
   if (seconds > 59) return null;
 
   const total = hours * 3600 + minutes * 60 + seconds;
-  return total > 0 ? total : null;
+  // 숫자가 아주 길면 Infinity가 되어 통계 합계와 페이스가 깨지므로, 하루 이틀을 넘는 값은 오타로 보고 거부합니다
+  return Number.isFinite(total) && total > 0 && total <= MAX_DURATION_SECONDS ? total : null;
 }
 
 // 초 단위 값을 화면 표시용 문자열로 바꿉니다. 1시간 이상이면 h:mm:ss, 아니면 mm:ss입니다

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-// 관리자 홈: 관리 작업으로 가는 입구입니다. 기록 입력이 있고, 수정·삭제는 이후 단계에서 추가합니다
+// 관리자 홈: 관리 작업으로 가는 입구입니다. 기록 입력, 목록(수정·삭제)으로 가는 입구입니다
 export default async function AdminHomePage() {
   // 레이아웃과 별개로 페이지에서도 확인합니다(레이아웃은 클라이언트 이동 때 다시 실행되지 않을 수 있음)
   await requireAdmin();

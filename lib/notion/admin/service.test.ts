@@ -208,6 +208,13 @@ test("getRunForEdit: 노션에서 직접 읽어 입력칸 값과 내용 버전�
   assert.equal(result.ok, true);
   assert.ok(result.ok && result.version === DEFAULT_VERSION && result.values.title === "한강 아침 러닝" && result.values.tags === "회복, 장거리");
   assert.deepEqual(fake.methods(), ["pages.retrieve"]);
+  assert.deepEqual(result.ok && result.notices, []);
+});
+
+test("getRunForEdit: 모르는 강도와 전각 쉼표 태그는 notices로 알린다", async () => {
+  const { service } = setup({ retrieved: runPage({ properties: baseProps({ 강도: prop.select("몹시 힘듦"), 태그: prop.multi(["a，b"]) }) }) });
+  const result = await service.getRunForEdit(PAGE_ID);
+  assert.ok(result.ok && result.notices.length === 2);
 });
 
 test("getRunForEdit: 형식이 틀린 id는 노션을 부르지 않고, 다른 DB 페이지와 휴지통 페이지는 404", async () => {
