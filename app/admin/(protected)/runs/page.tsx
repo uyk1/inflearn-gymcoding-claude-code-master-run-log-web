@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { ExcludedRuns } from "@/components/admin/excluded-runs";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireAdmin } from "@/lib/auth/require-admin";
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
 // 관리자 전용 기록 목록입니다. 공개 화면에는 관리자 링크를 두지 않으므로(쿠키를 읽으면 공개 화면이 동적이 됨) 수정은 여기서 시작합니다
 export default async function AdminRunsPage() {
   await requireAdmin();
-  const { records, errorMessage } = await loadRunRecords();
+  const { records, excluded, errorMessage } = await loadRunRecords();
 
   return (
     <div className="mx-auto w-full max-w-xl space-y-6 py-6">
@@ -32,6 +33,9 @@ export default async function AdminRunsPage() {
       <Link href="/admin/runs/new" className={cn(buttonVariants({ size: "lg" }), "w-full")}>
         기록 입력
       </Link>
+
+      {/* 제외된 기록은 입력 원문 없이 제목과 사유만 보여 주고, 수정 화면에서 고칩니다 */}
+      <ExcludedRuns items={excluded} />
 
       {errorMessage ? (
         <p role="alert" className="text-destructive text-sm">
