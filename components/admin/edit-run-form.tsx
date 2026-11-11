@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -16,7 +16,7 @@ import { createRunFormResolver, RunFormFields } from "./run-form-fields";
 const PLACEHOLDER_KEY = "00000000-0000-4000-8000-000000000000";
 const RETRY_MESSAGE = "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
-type Notice = "saved" | "conflict" | "gone" | "expired" | null;
+type Notice = "saved" | "conflict" | "gone" | "expired" | "reloaded" | null;
 
 // 러닝 기록 수정 폼입니다. 저장할 때 수정 화면을 연 시점의 내용 버전(version)을 함께 보내고,
 // 노션에서 먼저 바뀐 내용이 있으면(409) 덮어쓰지 않고 최신 내용을 다시 불러오게 합니다
@@ -32,6 +32,9 @@ export function EditRunForm({
   const router = useRouter();
   const inFlightRef = useRef(false);
   const noticeRef = useRef<HTMLDivElement>(null);
+  // 사용자가 "최신 내용 불러오기"를 눌러 새로고침한 것인지 구분합니다(안내 문구와 포커스 이동에 씁니다)
+  const reloadingRef = useRef(false);
+  const [reloading, startReload] = useTransition();
   const [version, setVersion] = useState(initialVersion);
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
@@ -42,15 +45,18 @@ export function EditRunForm({
     resolver: createRunFormResolver(() => PLACEHOLDER_KEY),
   });
 
-  // 최신 내용 불러오기(router.refresh) 뒤 서버가 새 값을 내려주면 입력칸과 버전을 그 값으로 바꿉니다.
-  // initialVersion이 바뀔 때만 다시 채워, 입력 중인 값이 지워지지 않게 합니다
+  // 서버가 새 값을 내려주면(처음 렌더링, 최신 내용 불러오기) 입력칸과 버전을 그 값으로 바꿉니다.
+  // 서버 컴포넌트가 다시 렌더링될 때만 initialValues가 새 객체가 되므로 입력 중인 값은 지워지지 않습니다.
+  // 버전이 아니라 이 객체를 기준으로 삼아, 노션 내용이 처음 열었을 때와 같아져도 다시 채웁니다
   useEffect(() => {
     setVersion(initialVersion);
     form.reset(initialValues);
-    setNotice(null);
     setFormError(null);
+    setNotice(reloadingRef.current ? "reloaded" : null);
+    reloadingRef.current = false;
+    // form과 initialVersion은 initialValues와 함께 바뀌므로 initialValues만 기준으로 합니다
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialVersion]);
+  }, [initialValues]);
 
   // 결과 안내가 나타나면 스크린 리더가 읽도록 포커스를 옮깁니다
   useEffect(() => {
@@ -110,7 +116,8 @@ export function EditRunForm({
       <RunFormFields form={form} />
 
       {notice && (
-        <div ref={noticeRef} tabIndex={-1} role={notice === "saved" ? "status" : "alert"} className="space-y-3 outline-none">
+        // 오류 안내(FieldError)가 이미 role=alert라서 바깥 래퍼에는 역할을 주지 않아 이중 낭독을 막습니다
+        <div ref={noticeRef} tabIndex={-1} role={notice === "saved" || notice === "reloaded" ? "status" : undefined} className="space-y-3 outline-none">
           {notice === "saved" && (
             <p className="text-sm font-medium">
               저장되었습니다.{" "}
@@ -119,11 +126,22 @@ export function EditRunForm({
               </Link>
             </p>
           )}
+          {notice === "reloaded" && <p className="text-sm font-medium">노션의 최신 내용을 불러왔습니다.</p>}
           {notice === "conflict" && (
             <FieldError>
               노션에서 먼저 바뀐 내용이 있어 저장하지 않았습니다. 최신 내용을 불러오면 지금 입력한 내용은 사라집니다.
-              <Button type="button" variant="outline" size="lg" className="mt-3 w-full" onClick={() => router.refresh()}>
-                최신 내용 불러오기
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="mt-3 w-full"
+                disabled={reloading}
+                onClick={() => {
+                  reloadingRef.current = true;
+                  startReload(() => router.refresh());
+                }}
+              >
+                {reloading ? "불러오는 중..." : "최신 내용 불러오기"}
               </Button>
             </FieldError>
           )}

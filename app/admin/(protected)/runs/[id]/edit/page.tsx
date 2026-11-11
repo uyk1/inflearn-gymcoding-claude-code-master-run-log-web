@@ -37,6 +37,16 @@ export default async function EditRunPage({ params }: { params: Promise<{ id: st
         </Link>
         <h1 className="text-2xl font-bold tracking-tight">기록 수정</h1>
       </div>
+      {result.notices.length > 0 && (
+        <div role="note" className="border-destructive/50 text-destructive space-y-1 rounded-xl border p-3 text-sm break-keep">
+          <p className="font-medium">이 기록은 저장하면 노션의 값이 일부 달라집니다.</p>
+          <ul className="list-disc pl-5">
+            {result.notices.map((notice) => (
+              <li key={notice}>{notice}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       <EditRunForm id={result.id} initialValues={result.values} initialVersion={result.version} />
       <div className="border-t pt-6">
         <DeleteRun id={result.id} title={result.values.title || "(제목 없음)"} />

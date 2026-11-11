@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { baseProps, prop } from "../test-pages.ts";
-import { pageToRunFormValues } from "./page-to-form.ts";
+import { detectLossyChanges, pageToRunFormValues } from "./page-to-form.ts";
 import { validateRunForm } from "./run-form.ts";
 
 const KEY = "3f2b8c1e-5d4a-4b6c-9e7f-0a1b2c3d4e5f";
@@ -70,3 +70,16 @@ test("정상 기록의 입력칸 값은 그대로 폼 검증을 통과한다(고
     assert.equal(result.success, true, JSON.stringify(over).slice(0, 80));
   }
 });
+
+test("detectLossyChanges: 정상 기록은 빈 배열, 모르는 강도와 전각 쉼표 태그는 문구를 돌려준다", () => {
+  const detect = (over: Record<string, unknown> = {}) => detectLossyChanges({ properties: baseProps(over) as never });
+  assert.deepEqual(detect(), []);
+  assert.deepEqual(detect({ 강도: prop.select(null) }), []);
+  assert.equal(detect({ 강도: prop.select("몹시 힘듦") }).length, 1);
+  assert.match(detect({ 강도: prop.select("몹시 힘듦") })[0], /몹시 힘듦/);
+  const tags = detect({ 태그: prop.multi(["a，b", "c", "d，e"]) });
+  assert.equal(tags.length, 2);
+  assert.match(tags[0], /a，b/);
+  assert.deepEqual(detectLossyChanges({ properties: {} as never }), []);
+});
+

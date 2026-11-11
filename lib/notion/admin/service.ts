@@ -4,7 +4,7 @@
 import { AppError } from "../../errors.ts";
 import { computeVersion } from "./edit-version.ts";
 import { isPageId, parseRunInput, parseRunUpdate } from "./input.ts";
-import { pageToRunFormValues } from "./page-to-form.ts";
+import { detectLossyChanges, pageToRunFormValues } from "./page-to-form.ts";
 import type { AdminRunRepository } from "./repository.ts";
 import type { RunFormValues } from "./run-form.ts";
 import { toExternalId, toNotionProperties, toNotionUpdateProperties } from "./to-properties.ts";
@@ -14,8 +14,10 @@ type FieldErrors = Record<string, string>;
 // 입력이 틀리면 ok: false와 필드별 오류만 돌려주고 노션은 부르지 않습니다. 노션 실패는 AppError(502)를 던집니다
 export type CreateRunResult = { ok: true; id: string; created: boolean } | { ok: false; fieldErrors: FieldErrors };
 export type MutateRunResult = { ok: true; id: string } | { ok: false; fieldErrors: FieldErrors };
-// 수정 화면에 채울 입력칸 값과 그 시점의 내용 버전
-export type EditRunResult = { ok: true; id: string; values: RunFormValues; version: string } | { ok: false; fieldErrors: FieldErrors };
+// 수정 화면에 채울 입력칸 값과 그 시점의 내용 버전, 저장하면 노션 값이 달라지는 항목 안내(notices)
+export type EditRunResult =
+  | { ok: true; id: string; values: RunFormValues; version: string; notices: string[] }
+  | { ok: false; fieldErrors: FieldErrors };
 // 수정 결과: 노션이 돌려준 페이지로 만든 새 내용 버전을 함께 돌려줍니다
 export type UpdateRunResult = { ok: true; id: string; version: string } | { ok: false; fieldErrors: FieldErrors };
 
@@ -51,7 +53,7 @@ export class AdminRunService {
     return this.guard("read", async () => {
       const page = await this.repository.assertRunPage(pageId);
       const values = pageToRunFormValues(page);
-      return { ok: true as const, id: pageId, values, version: computeVersion(values) };
+      return { ok: true as const, id: pageId, values, version: computeVersion(values), notices: detectLossyChanges(page) };
     });
   }
 
