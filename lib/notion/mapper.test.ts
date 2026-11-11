@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test, { mock } from "node:test";
 
-import { toRunMapResult } from "./mapper.ts";
+import { excludedReasonsOf, toRunMapResult } from "./mapper.ts";
 import { baseProps, fakePage, prop } from "./test-pages.ts";
 
 // 제외 로그(console.warn)가 테스트 출력을 어지럽히지 않게 막습니다
@@ -99,4 +99,18 @@ test("속성 타입이 틀리거나 속성이 없으면 제외된다", () => {
 
   const missing = toRunMapResult(fakePage("page-2", {}));
   assert.equal(missing.kind, "excluded");
+});
+
+test("excludedReasonsOf: 사유 6종을 계산하고 정상이면 빈 배열이며, 매퍼의 제외 사유와 같다", () => {
+  const reasons = (over: Record<string, unknown> = {}) => excludedReasonsOf(baseProps(over) as never);
+  assert.deepEqual(reasons(), []);
+  assert.deepEqual(reasons({ 제목: prop.title("") }), ["제목 없음"]);
+  assert.deepEqual(reasons({ 날짜: prop.date(null) }), ["날짜 없음"]);
+  assert.deepEqual(reasons({ 날짜: prop.date("2026-13-45") }), ["날짜 형식 오류"]);
+  assert.deepEqual(reasons({ "거리(Km)": prop.num(null) }), ["거리 없음"]);
+  assert.deepEqual(reasons({ 소요시간: prop.rich("") }), ["소요시간 없음"]);
+  assert.deepEqual(reasons({ 소요시간: prop.rich("12:5") }), ["소요시간 형식 오류"]);
+  const many = { 제목: prop.title(""), 날짜: prop.date(null), "거리(Km)": prop.num(null), 소요시간: prop.rich("12:5") };
+  assert.deepEqual(reasons(many), ["제목 없음", "날짜 없음", "거리 없음", "소요시간 형식 오류"]);
+  assert.deepEqual(excluded(many).reasons, reasons(many));
 });

@@ -2,8 +2,10 @@
 // 로그에는 작업 이름과 오류의 name, code, status만 남깁니다(입력값, 오류 메시지, 키는 남기지 않음).
 // 테스트(node --test)에서 바로 실행할 수 있도록 상대 경로 import와 매개변수 프로퍼티 없는 필드를 씁니다.
 import { AppError } from "../../errors.ts";
-import { computeVersion } from "./edit-version.ts";
+import { computePageVersion } from "./edit-version.ts";
 import { isPageId, parseRunInput, parseRunUpdate } from "./input.ts";
+import { excludedReasonsOf } from "../mapper.ts";
+import type { ExcludedReason } from "../dto.ts";
 import { detectLossyChanges, pageToRunFormValues } from "./page-to-form.ts";
 import type { AdminRunRepository } from "./repository.ts";
 import type { RunFormValues } from "./run-form.ts";
@@ -16,7 +18,7 @@ export type CreateRunResult = { ok: true; id: string; created: boolean } | { ok:
 export type MutateRunResult = { ok: true; id: string } | { ok: false; fieldErrors: FieldErrors };
 // 수정 화면에 채울 입력칸 값과 그 시점의 내용 버전, 저장하면 노션 값이 달라지는 항목 안내(notices)
 export type EditRunResult =
-  | { ok: true; id: string; values: RunFormValues; version: string; notices: string[] }
+  | { ok: true; id: string; values: RunFormValues; version: string; notices: string[]; excludedReasons: ExcludedReason[] }
   | { ok: false; fieldErrors: FieldErrors };
 // 수정 결과: 노션이 돌려준 페이지로 만든 새 내용 버전을 함께 돌려줍니다
 export type UpdateRunResult = { ok: true; id: string; version: string } | { ok: false; fieldErrors: FieldErrors };
@@ -53,7 +55,7 @@ export class AdminRunService {
     return this.guard("read", async () => {
       const page = await this.repository.assertRunPage(pageId);
       const values = pageToRunFormValues(page);
-      return { ok: true as const, id: pageId, values, version: computeVersion(values), notices: detectLossyChanges(page) };
+      return { ok: true as const, id: pageId, values, version: computePageVersion(page), notices: detectLossyChanges(page), excludedReasons: excludedReasonsOf(page.properties) };
     });
   }
 
@@ -71,11 +73,11 @@ export class AdminRunService {
 
     return this.guard("update", async () => {
       const page = await this.repository.assertRunPage(pageId);
-      if (computeVersion(pageToRunFormValues(page)) !== baseVersion) {
+      if (computePageVersion(page) !== baseVersion) {
         throw new AppError("CONFLICT", "노션에서 먼저 바뀐 내용이 있어 저장하지 않았습니다.", 409);
       }
       const updated = await this.repository.updatePage(pageId, toNotionUpdateProperties(parsed.data));
-      return { ok: true as const, id: pageId, version: computeVersion(pageToRunFormValues(updated)) };
+      return { ok: true as const, id: pageId, version: computePageVersion(updated) };
     });
   }
 

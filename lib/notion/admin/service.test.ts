@@ -334,3 +334,18 @@ test("updateRun: 노션 수정이 실패하면 502이고 충돌 거부(409)와 �
   assert.ok(!JSON.stringify(log.mock.calls.map((c) => c.arguments)).includes("SECRET"));
   log.mock.restore();
 });
+
+test("getRunForEdit: 제외 사유를 돌려주고(정상이면 빈 배열) 형식이 틀린 값끼리 바뀌어도 충돌로 본다", async () => {
+  const bad = (소요시간: string) => runPage({ properties: baseProps({ 소요시간: prop.rich(소요시간), 날짜: prop.date(null) }) });
+  const { service } = setup({ retrieved: bad("12:5") });
+  const result = await service.getRunForEdit(PAGE_ID);
+  assert.ok(result.ok && result.excludedReasons.join() === "날짜 없음,소요시간 형식 오류");
+  assert.ok(result.ok && result.values.duration === "12:5" && result.values.date === "");
+
+  // 열었을 때의 버전으로, 노션의 형식 오류 값이 12:6으로 바뀐 뒤 저장하면 409(같은 버전으로 뭉개지지 않음)
+  const { service: later } = setup({ retrieved: bad("12:6") });
+  await assert.rejects(() => later.updateRun(PAGE_ID, updateInput(), result.ok ? result.version : ""), (e: unknown) => e instanceof AppError && e.status === 409);
+
+  const normal = await setup().service.getRunForEdit(PAGE_ID);
+  assert.ok(normal.ok && normal.excludedReasons.length === 0);
+});
