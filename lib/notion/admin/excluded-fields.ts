@@ -24,8 +24,9 @@ export function excludedFields(reasons: readonly ExcludedReason[]): (keyof RunFo
   return order.filter((field) => fields.has(field));
 }
 
-// 수정 화면 위에 보여 주는 안내 문구입니다. 제외 사유가 없으면 null입니다
+// 수정 화면 위에 보여 주는 안내 문구입니다. 제외 사유가 없으면 null입니다.
+// 사유는 해당 입력칸의 오류 문구가 알려 주므로(스크린 리더가 두 번 읽지 않게) 여기서는 반복하지 않습니다
 export function excludedNoticeText(reasons: readonly ExcludedReason[]): string | null {
   if (reasons.length === 0) return null;
-  return `이 기록은 ${reasons.join(", ")} 때문에 목록에서 제외돼 있습니다. 고쳐서 저장하면 목록에 나타납니다.`;
+  return "이 기록은 입력값에 문제가 있어 목록에서 제외돼 있습니다. 아래에 표시된 칸을 고쳐서 저장하면 목록에 나타납니다.";
 }

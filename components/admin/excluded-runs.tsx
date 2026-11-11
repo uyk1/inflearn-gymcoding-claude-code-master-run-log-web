@@ -32,7 +32,8 @@ export function ExcludedRuns({ items }: { items: ExcludedRunDto[] }) {
               </div>
               <Link
                 href={`/admin/runs/${item.pageId}/edit`}
-                aria-label={`${title} 고치기`}
+                // 제목이 같거나 없는 행도 구분되도록 사유를 함께 읽어 줍니다
+                aria-label={`${title}(${item.reasons.join(", ")}) 고치기`}
                 className={cn(FOCUS_RING, buttonVariants({ variant: "outline", size: "lg" }), "w-full sm:w-auto")}
               >
                 고치기

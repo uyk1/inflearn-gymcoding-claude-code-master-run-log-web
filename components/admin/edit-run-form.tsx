@@ -68,6 +68,15 @@ export function EditRunForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialValues]);
 
+  // 사유 칸의 오류는 제출 전에 직접 만든 것이라(기본 검증 시점이 제출 때) 값을 고쳐도 저장 전까지 남습니다.
+  // 오류가 있는 칸이 바뀌면 그 칸만 다시 검증해, 고치는 즉시 오류가 사라지게 합니다
+  useEffect(() => {
+    const subscription = form.watch((_, { name }) => {
+      if (name && form.getFieldState(name).error) void form.trigger(name);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
   // 결과 안내가 나타나면 스크린 리더가 읽도록 포커스를 옮깁니다
   useEffect(() => {
     if (notice) noticeRef.current?.focus();

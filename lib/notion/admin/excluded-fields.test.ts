@@ -18,5 +18,8 @@ test("excludedFields: 중복 없이 폼 순서대로", () => {
 test("excludedNoticeText: 사유가 없으면 null, 있으면 사유를 담은 안내", () => {
   assert.equal(excludedNoticeText([]), null);
   const text = excludedNoticeText(["날짜 없음", "소요시간 형식 오류"]);
-  assert.ok(text?.includes("날짜 없음, 소요시간 형식 오류") && text.includes("목록에서 제외"));
+  assert.ok(text);
+  assert.ok(text.includes("목록에서 제외") && text.includes("표시된 칸"));
+  // 사유는 입력칸 오류가 알려 주므로 안내에서 반복하지 않는다
+  assert.ok(!text.includes("날짜 없음") && !text.includes("소요시간 형식 오류"));
 });
